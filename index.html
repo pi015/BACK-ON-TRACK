@@ -89,6 +89,8 @@ body.light .theme-toggle,body.light .theme-toggle-mob{background:var(--surface);
 body.light .sidebar-bottom .streak-box{background:rgba(251,191,36,0.08);}
 body.light .sidebar-bottom .retest-box{background:rgba(168,85,247,0.06);}
 body.light .perfect-banner{background:rgba(34,197,94,0.06);}
+body.light .habit-row.skipped{background:rgba(100,116,139,0.05)!important;border-color:rgba(100,116,139,0.2)!important;}
+body.light .skipped .habit-name{color:var(--muted)!important;}
 
 /* VERSION TOAST */
 .version-toast{position:fixed;bottom:calc(90px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:8px 18px;font-size:13px;letter-spacing:0.5px;color:var(--muted);z-index:999;opacity:0;transition:opacity 0.4s;pointer-events:none;white-space:nowrap;}
@@ -207,7 +209,7 @@ body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;d
 .saved-flash{font-size:13px;color:var(--health);letter-spacing:0.5px;margin-top:7px;opacity:0;transition:opacity 0.3s;display:inline-block;}
 .saved-flash.show{opacity:1;}
 .task-input-row{display:flex;gap:8px;margin-bottom:12px;}
-.task-input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 13px;color:var(--text);font-family:'Space Mono',monospace;font-size:13px;outline:none;transition:border-color 0.15s;}
+.task-input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 13px;color:var(--text);font-family:'Space Mono',monospace;font-size:13px;outline:none;transition:border-color 0.15s;min-width:0;max-width:100%;box-sizing:border-box;}
 .task-input:focus{border-color:var(--muted2);}
 .task-input::placeholder{color:var(--muted);}
 .add-btn{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 13px;color:var(--text);font-size:14px;cursor:pointer;transition:all 0.15s;}
@@ -449,6 +451,9 @@ body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;d
     <button class="nav-item" onclick="showView('meds')"><span class="nav-icon">💊</span>MEDS TRACKER</button>
     <button class="nav-item" onclick="showView('body')"><span class="nav-icon">🩺</span>BODY LOG</button>
     <button class="nav-item" onclick="showView('money')"><span class="nav-icon">💰</span>MONEY TRACKER</button>
+    <button class="nav-item" onclick="showView('movies')"><span class="nav-icon">🎬</span>MOVIES</button>
+    <button class="nav-item" onclick="showView('quotes')"><span class="nav-icon">💭</span>MY QUOTES</button>
+    <button class="nav-item" onclick="showView('wishlist')"><span class="nav-icon">🛒</span>WISHLIST</button>
     <button class="nav-item" onclick="showView('breathe')"><span class="nav-icon">🧘</span>BREATHE</button>
     <button class="nav-item" onclick="openFocus()"><span class="nav-icon">⏱</span>FOCUS TIMER</button>
     <div class="nav-section">PROGRESS</div>
@@ -529,7 +534,7 @@ body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;d
         </div>
       </div>
       <div class="panel"><div class="panel-header"><span class="panel-title">TODAY'S RADAR</span></div><div class="panel-body"><div class="chart-wrap radar-wrap" style="height:190px"><canvas id="radar-chart"></canvas></div></div></div>
-      <div id="sunday-review-banner" style="display:none;background:rgba(168,85,247,0.07);border:1px solid rgba(168,85,247,0.25);border-radius:12px;padding:14px 16px;margin-top:12px;display:none;cursor:pointer;" onclick="showView('review')">
+      <div id="sunday-review-banner" style="display:none;background:rgba(168,85,247,0.07);border:1px solid rgba(168,85,247,0.25);border-radius:12px;padding:14px 16px;margin-top:12px;cursor:pointer;" onclick="showView('review')">
     <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--purple);letter-spacing:0.5px;">📝 SUNDAY REVIEW TIME</div>
     <div style="font-size:13px;color:var(--muted);margin-top:4px;">10 minutes of reflection = weeks of progress. Tap to review.</div>
   </div>
@@ -703,6 +708,10 @@ body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;d
     <div>
       <div class="panel"><div class="panel-header"><span class="panel-title">DATA OVERVIEW</span></div><div class="panel-body" id="data-overview"></div></div>
       <div class="panel">
+        <div class="panel-header"><span class="panel-title">SHOW / HIDE TABS</span></div>
+        <div class="panel-body" id="tab-toggles-panel"></div>
+      </div>
+      <div class="panel">
         <div class="panel-header"><span class="panel-title">DANGER ZONE</span></div>
         <div class="panel-body">
           <div style="font-size:13px;color:var(--muted);letter-spacing:0.5px;margin-bottom:13px;">THIS CANNOT BE UNDONE</div>
@@ -714,7 +723,7 @@ body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;d
 </div>
 
 <!-- MANAGE HABITS -->
-<div class="view" id="view-habits_mgr">
+<div class="view" id="view-habits_mgr" style="overflow-x:hidden;">
   <div class="topbar"><div class="page-title">MANAGE HABITS</div></div>
   <div class="grid-2">
     <div>
@@ -1117,6 +1126,112 @@ body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;d
   </div>
 </div>
 
+
+<!-- MOVIES -->
+<div class="view" id="view-movies">
+  <div class="topbar"><div class="page-title">MOVIES TO WATCH</div></div>
+  <div class="grid-2">
+    <div>
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">ADD A MOVIE</span></div>
+        <div class="panel-body">
+          <input class="task-input" id="movie-title" placeholder="Movie or show name..." style="width:100%;margin-bottom:8px;" maxlength="80"/>
+          <input class="task-input" id="movie-note" placeholder="Why you want to watch it... (optional)" style="width:100%;margin-bottom:8px;" maxlength="100"/>
+          <div style="font-size:13px;color:var(--muted);letter-spacing:0.5px;margin-bottom:8px;">TYPE</div>
+          <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+            <button class="task-priority p-high" id="mtype-movie" onclick="setMovieType('movie')" style="padding:5px 12px;">🎬 MOVIE</button>
+            <button class="task-priority p-mid" id="mtype-series" onclick="setMovieType('series')" style="padding:5px 12px;opacity:0.4;">📺 SERIES</button>
+            <button class="task-priority p-low" id="mtype-doc" onclick="setMovieType('doc')" style="padding:5px 12px;opacity:0.4;">🎥 DOC</button>
+          </div>
+          <button class="save-btn" onclick="addMovie()">+ ADD</button>
+          <span class="saved-flash" id="movie-flash" style="margin-left:10px;">✓ ADDED</span>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">YOUR LIST</span>
+          <div style="display:flex;gap:6px;">
+            <button onclick="filterMovies('all')" id="mf-all" style="font-size:11px;padding:3px 8px;border-radius:4px;border:1px solid var(--gold);background:rgba(251,191,36,0.1);color:var(--gold);cursor:pointer;font-family:monospace;">ALL</button>
+            <button onclick="filterMovies('pending')" id="mf-pending" style="font-size:11px;padding:3px 8px;border-radius:4px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-family:monospace;">TO WATCH</button>
+            <button onclick="filterMovies('watched')" id="mf-watched" style="font-size:11px;padding:3px 8px;border-radius:4px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-family:monospace;">WATCHED</button>
+          </div>
+        </div>
+        <div class="panel-body" id="movies-list" style="max-height:560px;overflow-y:auto;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- MY QUOTES -->
+<div class="view" id="view-quotes">
+  <div class="topbar"><div class="page-title">MY QUOTES</div></div>
+  <div style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.7;">Dump quotes from books, people, anywhere. They'll show up randomly as your daily quote.</div>
+  <div class="grid-2">
+    <div>
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">ADD A QUOTE</span></div>
+        <div class="panel-body">
+          <textarea class="journal-textarea" id="quote-text-input" placeholder="The quote..." style="min-height:90px;margin-bottom:8px;"></textarea>
+          <input class="task-input" id="quote-author-input" placeholder="Source (book, person, unknown...)" style="width:100%;margin-bottom:12px;" maxlength="80"/>
+          <button class="save-btn" onclick="addMyQuote()">+ SAVE QUOTE</button>
+          <span class="saved-flash" id="quote-flash" style="margin-left:10px;">✓ SAVED</span>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">TODAY'S QUOTE</span></div>
+        <div class="panel-body" id="todays-quote-preview"></div>
+      </div>
+    </div>
+    <div>
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title" id="quote-count-label">ALL QUOTES</span></div>
+        <div class="panel-body" id="quotes-list" style="max-height:580px;overflow-y:auto;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- WISHLIST -->
+<div class="view" id="view-wishlist">
+  <div class="topbar"><div class="page-title">WISHLIST</div></div>
+  <div class="grid-2">
+    <div>
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">ADD ITEM</span></div>
+        <div class="panel-body">
+          <input class="task-input" id="wish-name" placeholder="What do you need/want..." style="width:100%;margin-bottom:8px;" maxlength="80"/>
+          <input class="task-input" id="wish-note" placeholder="Why, where to get it, price... (optional)" style="width:100%;margin-bottom:8px;" maxlength="120"/>
+          <div style="font-size:13px;color:var(--muted);letter-spacing:0.5px;margin-bottom:8px;">PRIORITY</div>
+          <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+            <button class="task-priority p-high" id="wpri-need" onclick="setWishPri('need')" style="padding:5px 12px;">🔴 NEED</button>
+            <button class="task-priority p-mid" id="wpri-want" onclick="setWishPri('want')" style="padding:5px 12px;opacity:0.4;">🟡 WANT</button>
+            <button class="task-priority p-low" id="wpri-someday" onclick="setWishPri('someday')" style="padding:5px 12px;opacity:0.4;">🟢 SOMEDAY</button>
+          </div>
+          <button class="save-btn" onclick="addWishItem()">+ ADD</button>
+          <span class="saved-flash" id="wish-flash" style="margin-left:10px;">✓ ADDED</span>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">YOUR LIST</span>
+          <div style="display:flex;gap:6px;">
+            <button onclick="filterWish('all')" id="wf-all" style="font-size:11px;padding:3px 8px;border-radius:4px;border:1px solid var(--gold);background:rgba(251,191,36,0.1);color:var(--gold);cursor:pointer;font-family:monospace;">ALL</button>
+            <button onclick="filterWish('pending')" id="wf-pending" style="font-size:11px;padding:3px 8px;border-radius:4px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-family:monospace;">PENDING</button>
+            <button onclick="filterWish('bought')" id="wf-bought" style="font-size:11px;padding:3px 8px;border-radius:4px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-family:monospace;">BOUGHT</button>
+          </div>
+        </div>
+        <div class="panel-body" id="wishlist-items" style="max-height:560px;overflow-y:auto;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 </main>
 
 <script>
@@ -1147,7 +1262,7 @@ const QUOTES=[
   {text:"Motivation gets you started. Habit keeps you going.",author:"— Jim Ryun"},
 ];
 
-const APP_VERSION="1.9.0";
+const APP_VERSION="2.0.2";
 const STORAGE_KEY="bot_v4";
 
 function migrateData(data){
@@ -1167,6 +1282,10 @@ function migrateData(data){
   if(!data.weeklyReviews)data.weeklyReviews={};
   if(data.retestDays===undefined)data.retestDays=90;
   if(data.bestStreak===undefined)data.bestStreak=0;
+  if(!data.movies)data.movies=[];
+  if(!data.myQuotes)data.myQuotes=[];
+  if(!data.wishlist)data.wishlist=[];
+  if(!data.hiddenTabs)data.hiddenTabs=[];
   data._version=APP_VERSION;
   return data;
 }
@@ -1175,11 +1294,11 @@ let db=migrateData(JSON.parse(localStorage.getItem(STORAGE_KEY)||"{}"));
 if(db.customHabits)HABITS=db.customHabits;
 let charts={};
 // ── ACTIVE DATE STATE (for past-day editing) ──────────────────────────────────
-let activeTodayKey=todayKey();
-let activeBodyKey=todayKey();
-let activeJournalKey=todayKey();
-let activeMedsKey=todayKey();
-let activeMoneyMonth=todayKey().slice(0,7);
+let activeTodayKey='';
+let activeBodyKey='';
+let activeJournalKey='';
+let activeMedsKey='';
+let activeMoneyMonth='';
 let newPriority="high";
 let newHabitCat="critical";
 
@@ -1197,7 +1316,7 @@ function save(){
 function todayKey(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function getKey(o=0){const d=new Date();d.setDate(d.getDate()+o);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function getLast(n){return Array.from({length:n},(_,i)=>getKey(-(n-1-i)));}
-function getScore(k){const dd=(db.habits&&db.habits[k])||{};return Math.round((HABITS.filter(h=>dd[h.id]===true).length/HABITS.length)*100);}
+function getScore(k){if(!HABITS.length)return 0;const dd=(db.habits&&db.habits[k])||{};return Math.round((HABITS.filter(h=>dd[h.id]===true).length/HABITS.length)*100);}
 function getStreak(){
   // 1 grace day per 7: a day counts if all critical done OR previous day was perfect and today is today
   let s=0;
@@ -1256,7 +1375,7 @@ function showView(v){
   document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
   document.getElementById('view-'+v).classList.add('active');
-  const idx=['today','tasks','journal','wins','learn','goals','hard','meds','body','money','breathe','week','review','graphs','report','habits_mgr','settings'].indexOf(v);
+  const idx=['today','tasks','journal','wins','learn','goals','hard','meds','body','money','movies','quotes','wishlist','breathe','week','review','graphs','report','habits_mgr','settings'].indexOf(v);
   if(idx>=0)document.querySelectorAll('.nav-item')[idx].classList.add('active');
   // Reset date pickers to today on each navigation
   const td=todayKey();
@@ -1264,7 +1383,7 @@ function showView(v){
   if(v==='body'){activeBodyKey=td;const dp=document.getElementById('body-date-picker');if(dp)dp.value=td;}
   if(v==='journal'){activeJournalKey=td;const dp=document.getElementById('journal-date-picker');if(dp)dp.value=td;}
   if(v==='meds'){activeMedsKey=td;const dp=document.getElementById('meds-date-picker');if(dp)dp.value=td;}
-  const renders={tasks:renderTasks,journal:renderJournal,wins:renderWins,learn:renderLearn,goals:renderGoals,hard:renderHard,meds:renderMeds,body:renderBody,money:renderMoney,breathe:renderBreathe,week:renderWeek,review:renderWeeklyReview,graphs:renderGraphs,report:renderReport,habits_mgr:renderHabitsMgr,settings:renderSettings};
+  const renders={tasks:renderTasks,journal:renderJournal,wins:renderWins,learn:renderLearn,goals:renderGoals,hard:renderHard,meds:renderMeds,body:renderBody,money:renderMoney,movies:renderMovies,quotes:renderMyQuotes,wishlist:renderWishlist,breathe:renderBreathe,week:renderWeek,review:renderWeeklyReview,graphs:renderGraphs,report:renderReport,habits_mgr:renderHabitsMgr,settings:renderSettings};
   if(renders[v])renders[v]();
 }
 
@@ -1310,7 +1429,7 @@ function openGoalModal(id){
     <div style="margin-bottom:16px;">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
         <span style="font-size:22px;">${icon}</span>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#f1f5f9;">${goal.title}</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--text-strong);">${goal.title}</div>
       </div>
       ${goal.deadline?`<div style="font-size:14px;color:${daysLeft<0?'#ef4444':daysLeft<30?'#fbbf24':'var(--muted)'};letter-spacing:0.5px;">${daysLeft<0?'OVERDUE BY '+Math.abs(daysLeft)+' DAYS':daysLeft===0?'DUE TODAY':''+daysLeft+' DAYS LEFT'} · ${goal.deadline}</div>`:''}
     </div>
@@ -1396,7 +1515,7 @@ function renderGoals(){
       <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;">
         <span style="font-size:22px;">${icon}</span>
         <div style="flex:1;">
-          <div style="font-size:14px;font-weight:700;color:${goal.done?'var(--muted)':'#f1f5f9'};text-decoration:${goal.done?'line-through':'none'};margin-bottom:3px;">${goal.title}</div>
+          <div style="font-size:14px;font-weight:700;color:${goal.done?'var(--muted)':'var(--text-strong)'};text-decoration:${goal.done?'line-through':'none'};margin-bottom:3px;">${goal.title}</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
             <span style="font-size:13px;letter-spacing:0.5px;padding:2px 7px;border-radius:4px;background:${color}22;color:${color};">${goal.cat.toUpperCase()}</span>
             ${goal.deadline?`<span style="font-size:13px;color:${daysLeft<0?'#ef4444':daysLeft<30?'#fbbf24':'var(--muted)'};">${daysLeft<0?'OVERDUE':daysLeft+'d left'}</span>`:''}
@@ -1473,7 +1592,7 @@ function renderHard(){
       <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:${h.why||h.step?'12':'0'}px;">
         <div onclick="toggleHardDone(${h.id})" style="width:22px;height:22px;border-radius:6px;border:2px solid ${h.done?'#22c55e':uc};background:${h.done?'#22c55e':'transparent'};cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:900;flex-shrink:0;margin-top:2px;">${h.done?'✓':''}</div>
         <div style="flex:1;">
-          <div style="font-size:14px;font-weight:700;color:${h.done?'var(--muted)':'#f1f5f9'};text-decoration:${h.done?'line-through':'none'};margin-bottom:5px;">${h.title}</div>
+          <div style="font-size:14px;font-weight:700;color:${h.done?'var(--muted)':'var(--text-strong)'};text-decoration:${h.done?'line-through':'none'};margin-bottom:5px;">${h.title}</div>
           <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;">
             <span style="font-size:13px;letter-spacing:0.5px;padding:2px 7px;border-radius:4px;background:${uc}22;color:${uc};">${urgLabels[h.urgency]}</span>
             <span style="font-size:13px;color:var(--muted);">${h.done?'✓ Confronted '+h.resolvedDate:'Added '+h.created}</span>
@@ -1563,7 +1682,7 @@ function renderLearnList(){
       <div style="flex:1;min-width:0;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
           <span style="font-size:14px;">${icon}</span>
-          <span style="font-size:13px;font-weight:700;color:${item.done?'var(--muted)':'#f1f5f9'};text-decoration:${item.done?'line-through':'none'};">${item.title}</span>
+          <span style="font-size:13px;font-weight:700;color:${item.done?'var(--muted)':'var(--text-strong)'};text-decoration:${item.done?'line-through':'none'};">${item.title}</span>
         </div>
         ${item.desc?`<div style="font-size:14px;color:var(--muted);margin-bottom:4px;line-height:1.5;">${item.desc}</div>`:''}
         <div style="display:flex;gap:8px;align-items:center;">
@@ -1636,7 +1755,7 @@ function renderHabitsMgr(){
     div.innerHTML=`
       <div style="font-size:22px;flex-shrink:0">${h.icon}</div>
       <div style="flex:1;min-width:0;">
-        <div style="font-size:13px;font-weight:700;color:#f1f5f9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${h.label}</div>
+        <div style="font-size:13px;font-weight:700;color:var(--text-strong);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${h.label}</div>
         <div style="font-size:13px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${h.desc}</div>
       </div>
       <button onclick="toggleHabitCat('${h.id}')" title="Change category" style="background:${CAT[h.cat].color}22;border:1px solid ${CAT[h.cat].color}55;border-radius:5px;padding:3px 7px;color:${CAT[h.cat].color};font-size:13px;cursor:pointer;font-family:monospace;white-space:nowrap;">${h.cat.toUpperCase()}</button>
@@ -1672,7 +1791,9 @@ function renderToday(){
   const fill=document.getElementById('prog-fill');
   fill.style.width=score+'%';fill.style.background=score===100?'#22c55e':score>=60?'#3b82f6':'#ef4444';
   document.getElementById('prog-pct').textContent=score+'%';
-  const qd=new Date();const qIdx=Math.floor((qd-new Date(qd.getFullYear(),0,0))/(864e5))%QUOTES.length;const q=QUOTES[qIdx];
+  const qd=new Date();const qDayIdx=Math.floor((qd-new Date(qd.getFullYear(),0,0))/(864e5));
+  const myQs=db.myQuotes&&db.myQuotes.length?db.myQuotes:null;
+  const q=myQs?myQs[qDayIdx%myQs.length]:QUOTES[qDayIdx%QUOTES.length];
   document.getElementById('quote-text').textContent='"'+q.text+'"';
   document.getElementById('quote-author').textContent=q.author;
   // Init date picker
@@ -1755,6 +1876,8 @@ function quickAddTask(){
   const today=todayKey();if(!db.tasks)db.tasks={};if(!db.tasks[today])db.tasks[today]=[];
   db.tasks[today].push({id:Date.now(),text,done:false,priority:'high'});
   input.value='';save();
+  // Show confirmation flash on today page instead of navigating away
+  const fl=document.createElement('div');fl.style.cssText='position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:var(--health);color:#fff;padding:8px 18px;border-radius:20px;font-size:13px;font-family:Space Mono,monospace;z-index:999;';fl.textContent='✓ TASK ADDED';document.body.appendChild(fl);setTimeout(()=>fl.remove(),1800);
 }
 
 function renderTasks(){
@@ -1903,6 +2026,7 @@ function saveRetestDate(){
 }
 
 function renderSettings(){
+  renderTabToggles();
   const rd=retestDays();document.getElementById('retest-big').textContent=rd;
   if(db.retestStart){
     const days=db.retestDays||90;
@@ -1927,7 +2051,7 @@ function renderSettings(){
 }
 
 function exportData(){const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='BackOnTrack_v'+APP_VERSION+'_'+todayKey()+'.json';a.click();}
-function importData(e){const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=ev=>{try{db=JSON.parse(ev.target.result);if(db.customHabits)HABITS=db.customHabits;save();alert('Imported!');renderToday();}catch(err){alert('Invalid file.');}};reader.readAsText(file);}
+function importData(e){const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=ev=>{try{const imported=JSON.parse(ev.target.result);db=migrateData(imported);if(db.customHabits)HABITS=db.customHabits;save();alert('✓ Imported successfully! All data loaded.');renderToday();applyTabVisibility();}catch(err){alert('Invalid file. Make sure it\'s a Back On Track backup.');}};reader.readAsText(file);}
 function clearAllData(){if(confirm('Delete ALL data? This cannot be undone.')&&confirm('Are you absolutely sure? All habits, journal, goals, everything gone.')){db=migrateData({});HABITS=[...DEFAULT_HABITS];save();renderToday();showVersionToast();}}
 
 // ─── THEME (single canonical definition) ─────────────────────────────────────
@@ -2265,6 +2389,299 @@ function saveWeeklyReview(){
   renderWeeklyReview();
 }
 
+
+// ─── MOVIES ──────────────────────────────────────────────────────────────────
+let movieType='movie';
+let movieFilter='all';
+
+function setMovieType(t){
+  movieType=t;
+  ['movie','series','doc'].forEach(x=>{
+    const btn=document.getElementById('mtype-'+x);
+    if(btn)btn.style.opacity=x===t?'1':'0.4';
+  });
+}
+
+function filterMovies(f){
+  movieFilter=f;
+  ['all','pending','watched'].forEach(x=>{
+    const btn=document.getElementById('mf-'+x);
+    if(btn){
+      btn.style.borderColor=x===f?'var(--gold)':'var(--border)';
+      btn.style.background=x===f?'rgba(251,191,36,0.1)':'transparent';
+      btn.style.color=x===f?'var(--gold)':'var(--muted)';
+    }
+  });
+  renderMoviesList();
+}
+
+function addMovie(){
+  const title=document.getElementById('movie-title').value.trim();
+  if(!title)return;
+  const note=document.getElementById('movie-note').value.trim();
+  if(!db.movies)db.movies=[];
+  db.movies.unshift({id:Date.now(),title,note,type:movieType,watched:false,added:todayKey()});
+  document.getElementById('movie-title').value='';
+  document.getElementById('movie-note').value='';
+  save();
+  const fl=document.getElementById('movie-flash');fl.classList.add('show');setTimeout(()=>fl.classList.remove('show'),2000);
+  renderMoviesList();
+}
+
+function toggleMovieWatched(id){
+  db.movies=(db.movies||[]).map(m=>m.id===id?{...m,watched:!m.watched,watchedDate:!m.watched?todayKey():null}:m);
+  save();renderMoviesList();
+}
+
+function deleteMovie(id){
+  db.movies=(db.movies||[]).filter(m=>m.id!==id);
+  save();renderMoviesList();
+}
+
+function renderMovies(){setMovieType(movieType);renderMoviesList();}
+
+function renderMoviesList(){
+  const list=document.getElementById('movies-list');if(!list)return;
+  const items=db.movies||[];
+  const filtered=items.filter(m=>movieFilter==='all'?true:movieFilter==='watched'?m.watched:!m.watched);
+  list.innerHTML='';
+  if(!filtered.length){list.innerHTML='<div style="font-size:14px;color:var(--muted);text-align:center;padding:20px;">'+
+    (movieFilter==='watched'?'Nothing watched yet. Go watch something.':'List is empty. Add movies to watch.')+'</div>';return;}
+  const typeIcons={movie:'🎬',series:'📺',doc:'🎥'};
+  filtered.forEach(m=>{
+    const div=document.createElement('div');
+    div.style.cssText=`display:flex;align-items:flex-start;gap:10px;background:var(--surface2);border:1px solid ${m.watched?'var(--border)':'var(--bodyc)44'};border-radius:10px;padding:13px;margin-bottom:8px;${m.watched?'opacity:0.6':''}`;
+    div.innerHTML=`
+      <div onclick="toggleMovieWatched(${m.id})" style="width:22px;height:22px;border-radius:6px;border:2px solid ${m.watched?'#22c55e':'var(--muted)'};background:${m.watched?'#22c55e':'transparent'};display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#fff;font-size:13px;font-weight:900;margin-top:1px;">${m.watched?'✓':''}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:700;color:var(--text-strong);text-decoration:${m.watched?'line-through':'none'};margin-bottom:4px;">${typeIcons[m.type]||'🎬'} ${m.title}</div>
+        ${m.note?`<div style="font-size:13px;color:var(--muted);margin-bottom:4px;line-height:1.5;">${m.note}</div>`:''}
+        <div style="font-size:11px;color:var(--muted);letter-spacing:0.5px;">${m.watched?'✓ WATCHED '+m.watchedDate:'Added '+m.added}</div>
+      </div>
+      <button onclick="deleteMovie(${m.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:0 3px;flex-shrink:0;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='var(--muted)'">✕</button>
+    `;
+    list.appendChild(div);
+  });
+}
+
+// ─── MY QUOTES ───────────────────────────────────────────────────────────────
+function addMyQuote(){
+  const text=document.getElementById('quote-text-input').value.trim();
+  if(!text)return;
+  const author=document.getElementById('quote-author-input').value.trim()||'— Unknown';
+  if(!db.myQuotes)db.myQuotes=[];
+  db.myQuotes.unshift({id:Date.now(),text,author,added:todayKey()});
+  document.getElementById('quote-text-input').value='';
+  document.getElementById('quote-author-input').value='';
+  save();
+  const fl=document.getElementById('quote-flash');fl.classList.add('show');setTimeout(()=>fl.classList.remove('show'),2000);
+  renderMyQuotes();
+}
+
+function deleteMyQuote(id){
+  db.myQuotes=(db.myQuotes||[]).filter(q=>q.id!==id);
+  save();renderMyQuotes();
+}
+
+function getTodaysMyQuote(){
+  const qs=db.myQuotes||[];
+  if(!qs.length)return null;
+  const dayIdx=Math.floor((new Date()-new Date(new Date().getFullYear(),0,0))/(864e5));
+  return qs[dayIdx%qs.length];
+}
+
+function renderMyQuotes(){
+  const list=document.getElementById('quotes-list');if(!list)return;
+  const qs=db.myQuotes||[];
+  const countEl=document.getElementById('quote-count-label');
+  if(countEl)countEl.textContent=qs.length+' QUOTES';
+  list.innerHTML='';
+  if(!qs.length){list.innerHTML='<div style="font-size:14px;color:var(--muted);text-align:center;padding:20px;">No quotes yet. Add your first one.</div>';}
+  qs.forEach(q=>{
+    const div=document.createElement('div');
+    div.style.cssText='background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:9px;padding:13px;margin-bottom:9px;';
+    div.innerHTML=`
+      <div style="font-size:13px;color:var(--text);line-height:1.7;font-style:italic;margin-bottom:6px;">"${q.text}"</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:11px;color:var(--muted);letter-spacing:0.5px;">${q.author}</span>
+        <button onclick="deleteMyQuote(${q.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='var(--muted)'">✕</button>
+      </div>
+    `;
+    list.appendChild(div);
+  });
+  // Today's quote preview
+  const preview=document.getElementById('todays-quote-preview');
+  if(preview){
+    const tq=getTodaysMyQuote();
+    if(tq){
+      preview.innerHTML=`<div style="font-size:13px;color:var(--text);line-height:1.7;font-style:italic;margin-bottom:6px;">"${tq.text}"</div><div style="font-size:11px;color:var(--muted);">${tq.author}</div>`;
+    } else {
+      preview.innerHTML='<div style="font-size:13px;color:var(--muted);">Add quotes above — one will show here as your daily quote.</div>';
+    }
+  }
+}
+
+// ─── WISHLIST ─────────────────────────────────────────────────────────────────
+let wishPri='need';
+let wishFilter='all';
+
+function setWishPri(p){
+  wishPri=p;
+  ['need','want','someday'].forEach(x=>{
+    const btn=document.getElementById('wpri-'+x);
+    if(btn)btn.style.opacity=x===p?'1':'0.4';
+  });
+}
+
+function filterWish(f){
+  wishFilter=f;
+  ['all','pending','bought'].forEach(x=>{
+    const btn=document.getElementById('wf-'+x);
+    if(btn){
+      btn.style.borderColor=x===f?'var(--gold)':'var(--border)';
+      btn.style.background=x===f?'rgba(251,191,36,0.1)':'transparent';
+      btn.style.color=x===f?'var(--gold)':'var(--muted)';
+    }
+  });
+  renderWishItems();
+}
+
+function addWishItem(){
+  const name=document.getElementById('wish-name').value.trim();
+  if(!name)return;
+  const note=document.getElementById('wish-note').value.trim();
+  if(!db.wishlist)db.wishlist=[];
+  db.wishlist.unshift({id:Date.now(),name,note,priority:wishPri,bought:false,added:todayKey()});
+  document.getElementById('wish-name').value='';
+  document.getElementById('wish-note').value='';
+  save();
+  const fl=document.getElementById('wish-flash');fl.classList.add('show');setTimeout(()=>fl.classList.remove('show'),2000);
+  renderWishItems();
+}
+
+function toggleWishBought(id){
+  db.wishlist=(db.wishlist||[]).map(w=>w.id===id?{...w,bought:!w.bought,boughtDate:!w.bought?todayKey():null}:w);
+  save();renderWishItems();
+}
+
+function deleteWishItem(id){
+  db.wishlist=(db.wishlist||[]).filter(w=>w.id!==id);
+  save();renderWishItems();
+}
+
+function renderWishlist(){setWishPri(wishPri);filterWish(wishFilter);}
+
+function renderWishItems(){
+  const list=document.getElementById('wishlist-items');if(!list)return;
+  const items=db.wishlist||[];
+  const filtered=items.filter(w=>wishFilter==='all'?true:wishFilter==='bought'?w.bought:!w.bought);
+  list.innerHTML='';
+  if(!filtered.length){list.innerHTML='<div style="font-size:14px;color:var(--muted);text-align:center;padding:20px;">'+(wishFilter==='bought'?'Nothing bought yet.':'List is empty.')+'</div>';return;}
+  const priColors={need:'#ef4444',want:'#fbbf24',someday:'#22c55e'};
+  const priLabels={need:'🔴 NEED',want:'🟡 WANT',someday:'🟢 SOMEDAY'};
+  // Sort: needs first, then wants, then someday; bought at end
+  const sorted=[...filtered].sort((a,b)=>{
+    if(a.bought!==b.bought)return a.bought?1:-1;
+    const o={need:0,want:1,someday:2};return o[a.priority]-o[b.priority];
+  });
+  sorted.forEach(w=>{
+    const pc=priColors[w.priority]||'#64748b';
+    const div=document.createElement('div');
+    div.style.cssText=`display:flex;align-items:flex-start;gap:10px;background:var(--surface2);border:1px solid ${w.bought?'var(--border)':pc+'44'};border-radius:10px;padding:13px;margin-bottom:8px;${w.bought?'opacity:0.55':''}`;
+    div.innerHTML=`
+      <div onclick="toggleWishBought(${w.id})" style="width:22px;height:22px;border-radius:6px;border:2px solid ${w.bought?'#22c55e':pc};background:${w.bought?'#22c55e':'transparent'};display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#fff;font-size:13px;font-weight:900;margin-top:1px;">${w.bought?'✓':''}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:700;color:var(--text-strong);text-decoration:${w.bought?'line-through':'none'};margin-bottom:4px;">${w.name}</div>
+        ${w.note?`<div style="font-size:13px;color:var(--muted);margin-bottom:4px;line-height:1.5;">${w.note}</div>`:''}
+        <div style="display:flex;gap:7px;align-items:center;">
+          <span style="font-size:11px;padding:2px 6px;border-radius:4px;background:${pc}22;color:${pc};letter-spacing:0.5px;">${priLabels[w.priority]}</span>
+          <span style="font-size:11px;color:var(--muted);">${w.bought?'✓ Bought '+w.boughtDate:'Added '+w.added}</span>
+        </div>
+      </div>
+      <button onclick="deleteWishItem(${w.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:0 3px;flex-shrink:0;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='var(--muted)'">✕</button>
+    `;
+    list.appendChild(div);
+  });
+}
+
+// ─── TAB VISIBILITY SYSTEM ───────────────────────────────────────────────────
+const ALL_TOGGLEABLE_TABS=[
+  {id:'tasks',icon:'📋',label:'TASKS'},
+  {id:'journal',icon:'📓',label:'JOURNAL'},
+  {id:'wins',icon:'⭐',label:'WINS LOG'},
+  {id:'learn',icon:'🎯',label:'LEARNING'},
+  {id:'goals',icon:'🏆',label:'GOALS'},
+  {id:'hard',icon:'🔥',label:'HARD THINGS'},
+  {id:'meds',icon:'💊',label:'MEDS'},
+  {id:'body',icon:'🩺',label:'BODY LOG'},
+  {id:'money',icon:'💰',label:'MONEY'},
+  {id:'movies',icon:'🎬',label:'MOVIES'},
+  {id:'quotes',icon:'💭',label:'MY QUOTES'},
+  {id:'wishlist',icon:'🛒',label:'WISHLIST'},
+  {id:'breathe',icon:'🧘',label:'BREATHE'},
+  {id:'week',icon:'📅',label:'WEEK'},
+  {id:'review',icon:'📝',label:'REVIEW'},
+  {id:'graphs',icon:'📈',label:'GRAPHS'},
+  {id:'report',icon:'📊',label:'REPORT'},
+];
+
+function isTabHidden(id){return (db.hiddenTabs||[]).includes(id);}
+
+function toggleTabVisibility(id){
+  if(!db.hiddenTabs)db.hiddenTabs=[];
+  if(db.hiddenTabs.includes(id)){
+    db.hiddenTabs=db.hiddenTabs.filter(t=>t!==id);
+  } else {
+    db.hiddenTabs.push(id);
+  }
+  save();
+  applyTabVisibility();
+  renderTabToggles();
+}
+
+function applyTabVisibility(){
+  // Desktop sidebar nav items
+  ALL_TOGGLEABLE_TABS.forEach(tab=>{
+    const hidden=isTabHidden(tab.id);
+    // Hide in sidebar
+    document.querySelectorAll('.nav-item').forEach(btn=>{
+      if(btn.getAttribute('onclick')&&btn.getAttribute('onclick').includes("'"+tab.id+"'")){
+        btn.style.display=hidden?'none':'';
+      }
+    });
+    // Hide in mobile nav
+    document.querySelectorAll('.mobile-nav-item').forEach(btn=>{
+      if(btn.getAttribute('onclick')&&btn.getAttribute('onclick').includes("'"+tab.id+"'")){
+        btn.style.display=hidden?'none':'';
+      }
+    });
+  });
+}
+
+function renderTabToggles(){
+  const panel=document.getElementById('tab-toggles-panel');if(!panel)return;
+  panel.innerHTML='';
+  const note=document.createElement('div');
+  note.style.cssText='font-size:13px;color:var(--muted);margin-bottom:13px;line-height:1.6;';
+  note.textContent="Hide tabs you don't use. TODAY and BACKUP are always visible.";
+  panel.appendChild(note);
+  ALL_TOGGLEABLE_TABS.forEach(tab=>{
+    const hidden=isTabHidden(tab.id);
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);';
+    row.innerHTML=`
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:16px;">${tab.icon}</span>
+        <span style="font-size:13px;color:${hidden?'var(--muted)':'var(--text)'};letter-spacing:0.5px;${hidden?'text-decoration:line-through':''}">${tab.label}</span>
+      </div>
+      <div onclick="toggleTabVisibility('${tab.id}')" style="width:42px;height:24px;border-radius:12px;background:${hidden?'var(--surface3)':'var(--gold)'};cursor:pointer;position:relative;transition:background 0.2s;border:1px solid ${hidden?'var(--border)':'var(--gold)'};flex-shrink:0;">
+        <div style="position:absolute;top:2px;${hidden?'left:2px':'right:2px'};width:18px;height:18px;border-radius:50%;background:${hidden?'var(--muted)':'#050508'};transition:all 0.2s;"></div>
+      </div>
+    `;
+    panel.appendChild(row);
+  });
+}
+
 // ─── BREATHE ─────────────────────────────────────────────────────────────────
 let breatheTimer=null;
 let breatheSessions=0;
@@ -2410,7 +2827,7 @@ function applyTheme(isLight){
   const active=document.querySelector('.view.active');
   if(active){
     const v=active.id.replace('view-','');
-    const renders={today:renderToday,tasks:renderTasks,week:renderWeek,graphs:renderGraphs,report:renderReport,meds:renderMeds,body:renderBody,money:renderMoney,journal:renderJournal,wins:renderWins,learn:renderLearn,goals:renderGoals,hard:renderHard,breathe:renderBreathe,habits_mgr:renderHabitsMgr,settings:renderSettings,review:renderWeeklyReview};
+    const renders={today:renderToday,tasks:renderTasks,week:renderWeek,graphs:renderGraphs,report:renderReport,meds:renderMeds,body:renderBody,money:renderMoney,journal:renderJournal,wins:renderWins,learn:renderLearn,goals:renderGoals,hard:renderHard,breathe:renderBreathe,habits_mgr:renderHabitsMgr,settings:renderSettings,review:renderWeeklyReview,movies:renderMovies,quotes:renderMyQuotes,wishlist:renderWishlist};
     if(renders[v])renders[v]();
     if(v==='today')updateRadar();
   }
@@ -2481,7 +2898,14 @@ function updateMobStreak(){
   }
 }
 
+// Init active date keys now that todayKey() is available
+activeTodayKey=todayKey();
+activeBodyKey=todayKey();
+activeJournalKey=todayKey();
+activeMedsKey=todayKey();
+activeMoneyMonth=todayKey().slice(0,7);
 initTheme();
+applyTabVisibility();
 // Set all date pickers to today on load
 (function(){
   const td=todayKey();
@@ -2508,6 +2932,9 @@ setTimeout(showVersionToast,1200);
   <button class="mobile-nav-item" onclick="mobNav('meds',this)"><span class="mn-icon">💊</span>MEDS</button>
   <button class="mobile-nav-item" onclick="mobNav('body',this)"><span class="mn-icon">🩺</span>BODY</button>
   <button class="mobile-nav-item" onclick="mobNav('money',this)"><span class="mn-icon">💰</span>MONEY</button>
+  <button class="mobile-nav-item" onclick="mobNav('movies',this)"><span class="mn-icon">🎬</span>MOVIES</button>
+  <button class="mobile-nav-item" onclick="mobNav('quotes',this)"><span class="mn-icon">💭</span>QUOTES</button>
+  <button class="mobile-nav-item" onclick="mobNav('wishlist',this)"><span class="mn-icon">🛒</span>WISHLIST</button>
   <button class="mobile-nav-item" onclick="mobNav('breathe',this)"><span class="mn-icon">🧘</span>BREATHE</button>
   <button class="mobile-nav-item" onclick="openFocus()"><span class="mn-icon">⏱</span>FOCUS</button>
   <button class="mobile-nav-item" onclick="mobNav('week',this)"><span class="mn-icon">📅</span>WEEK</button>
