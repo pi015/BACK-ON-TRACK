@@ -1413,7 +1413,7 @@ const QUOTES=[
   {text:"Motivation gets you started. Habit keeps you going.",author:"— Jim Ryun"},
 ];
 
-const APP_VERSION="2.5.0";
+const APP_VERSION="2.5.1";
 const STORAGE_KEY="bot_v4";
 
 function migrateData(data){
@@ -3065,20 +3065,21 @@ function setEncPassword(p){
 }
 
 function gdriveSignIn(){
+  // Ask for encryption password BEFORE OAuth popup (Safari blocks prompts inside callbacks)
+  if(!getEncPassword()){
+    const pw = prompt('Set an encryption password for your backups.\nThis encrypts data before uploading. Store it safely.\n\nEnter password:');
+    if(!pw){ gdriveSetStatus('❌ Cancelled — password required.','#ef4444'); return; }
+    const pw2 = prompt('Confirm your encryption password:');
+    if(pw !== pw2){ gdriveSetStatus('❌ Passwords did not match. Try again.','#ef4444'); return; }
+    setEncPassword(pw);
+  }
+  // Now trigger OAuth — clean callback with no prompts
   const client = google.accounts.oauth2.initTokenClient({
     client_id: GDRIVE_CLIENT_ID,
     scope: GDRIVE_SCOPE,
-    callback: async (resp) => {
+    callback: (resp) => {
       if(resp.error){ gdriveSetStatus('❌ Sign in failed: '+resp.error,'#ef4444'); return; }
       gdriveToken = resp.access_token;
-      // Check encryption password
-      if(!getEncPassword()){
-        const pw = prompt('Set an encryption password for your backups.\n\nThis encrypts your data before uploading to Drive. Store it safely — you need it to restore.\n\nEnter password:');
-        if(!pw){ gdriveSetStatus('❌ Cancelled — password required for encrypted backup.','#ef4444'); gdriveToken=null; return; }
-        const pw2 = prompt('Confirm your encryption password:');
-        if(pw !== pw2){ gdriveSetStatus('❌ Passwords did not match.','#ef4444'); gdriveToken=null; return; }
-        setEncPassword(pw);
-      }
       gdriveSetStatus('✅ Connected to Google Drive','#22c55e');
       gdriveRenderButtons(true);
     },
