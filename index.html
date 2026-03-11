@@ -442,6 +442,7 @@ body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;d
   <nav class="nav">
     <div class="nav-section">DAILY</div>
     <button class="nav-item active" onclick="showView('today')"><span class="nav-icon">✅</span>TODAY</button>
+    <button class="nav-item" onclick="showView('routine')"><span class="nav-icon">🔄</span>ROUTINE WORK</button>
     <button class="nav-item" onclick="showView('tasks')"><span class="nav-icon">📋</span>TASKS</button>
     <button class="nav-item" onclick="showView('journal')"><span class="nav-icon">📓</span>JOURNAL</button>
     <button class="nav-item" onclick="showView('wins')"><span class="nav-icon">⭐</span>WINS LOG</button>
@@ -513,11 +514,11 @@ body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;d
         <div class="panel-body" id="habit-list"></div>
       </div>
       <div class="panel">
-        <div class="panel-header"><span class="panel-title">QUICK ADD TASK</span></div>
+        <div class="panel-header"><span class="panel-title">QUICK ADD ROUTINE</span></div>
         <div class="panel-body">
           <div class="task-input-row">
-            <input class="task-input" id="quick-task-input" placeholder="Add a task for today..." onkeydown="if(event.key==='Enter')quickAddTask()"/>
-            <button class="add-btn" onclick="quickAddTask()">+</button>
+            <input class="task-input" id="quick-routine-input" placeholder="Add a routine task..." onkeydown="if(event.key==='Enter')quickAddRoutine()"/>
+            <button class="add-btn" onclick="quickAddRoutine()">+</button>
           </div>
         </div>
       </div>
@@ -544,6 +545,42 @@ body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;d
   </div>
 </div>
 
+<!-- ROUTINE WORK -->
+<div class="view" id="view-routine">
+  <div class="topbar"><div class="page-title">ROUTINE WORK</div><div class="badge" id="routine-date"></div></div>
+  <div style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.7;">Your recurring daily tasks. Define them once — they show up every day automatically. Tick them off as you go.</div>
+  <div class="grid-2">
+    <div>
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">ADD ROUTINE TASK</span></div>
+        <div class="panel-body">
+          <input class="task-input" id="routine-name-input" placeholder="e.g. Check emails, Update tracker..." style="width:100%;margin-bottom:8px;" maxlength="60" onkeydown="if(event.key==='Enter')addRoutineTemplate()"/>
+          <input class="task-input" id="routine-note-input" placeholder="Note (optional)" style="width:100%;margin-bottom:12px;" maxlength="80"/>
+          <button class="save-btn" onclick="addRoutineTemplate()">+ ADD ROUTINE</button>
+          <span class="saved-flash" id="routine-flash" style="margin-left:10px;">✓ ADDED</span>
+          <div style="margin-top:16px;background:rgba(168,85,247,0.06);border:1px solid rgba(168,85,247,0.2);border-radius:9px;padding:12px;">
+            <div style="font-size:13px;color:var(--purple);letter-spacing:0.5px;margin-bottom:5px;">💡 HOW IT WORKS</div>
+            <div style="font-size:13px;color:var(--muted);line-height:1.7;">Add tasks you do every day. They appear here daily — tick them off. Unlike regular tasks they never roll over or disappear. Edit the template list anytime.</div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">TEMPLATE LIST</span></div>
+        <div class="panel-body" id="routine-templates"></div>
+      </div>
+    </div>
+    <div>
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">TODAY'S ROUTINE</span>
+          <span id="routine-progress-label" style="font-size:13px;color:var(--muted);"></span>
+        </div>
+        <div class="panel-body" id="routine-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- TASKS -->
 <div class="view" id="view-tasks">
   <div class="topbar"><div class="page-title">DAILY TASKS</div><div class="badge" id="tasks-date"></div></div>
@@ -558,8 +595,7 @@ body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;d
           </div>
           <div style="display:flex;gap:7px;margin-bottom:13px;flex-wrap:wrap;align-items:center;">
             <span style="font-size:13px;color:var(--muted);letter-spacing:0.5px;">PRIORITY:</span>
-            <button class="task-priority p-rw" onclick="setNewPriority('rw')" id="pri-rw" style="opacity:0.4">🔄 RW</button>
-            <button class="task-priority p-high" onclick="setNewPriority('high')" id="pri-high" style="opacity:0.4">HIGH</button>
+            <button class="task-priority p-high" onclick="setNewPriority('high')" id="pri-high">HIGH</button>
             <button class="task-priority p-mid" onclick="setNewPriority('mid')" id="pri-mid" style="opacity:0.4">MID</button>
             <button class="task-priority p-low" onclick="setNewPriority('low')" id="pri-low" style="opacity:0.4">LOW</button>
           </div>
@@ -712,6 +748,16 @@ body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;d
       <div class="panel">
         <div class="panel-header"><span class="panel-title">SHOW / HIDE TABS</span></div>
         <div class="panel-body" id="tab-toggles-panel"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">APP UPDATE</span></div>
+        <div class="panel-body">
+          <div style="font-size:13px;color:var(--muted);letter-spacing:0.5px;margin-bottom:9px;">AFTER UPLOADING A NEW VERSION TO GITHUB</div>
+          <div style="font-size:13px;color:var(--muted);line-height:1.8;margin-bottom:14px;">Your data is safe in localStorage — it never changes when you update. Just upload the new file to GitHub, then tap the button below to reload the app with the latest version.</div>
+          <button class="save-btn" style="background:var(--bodyc);color:#fff;" onclick="applyUpdate()">⟳ RELOAD &amp; APPLY UPDATE</button>
+          <div style="margin-top:10px;font-size:12px;color:var(--muted);letter-spacing:0.5px;">Current version: v<span id="current-version-display"></span></div>
+        </div>
       </div>
       <div class="panel">
         <div class="panel-header"><span class="panel-title">DANGER ZONE</span></div>
@@ -1264,7 +1310,7 @@ const QUOTES=[
   {text:"Motivation gets you started. Habit keeps you going.",author:"— Jim Ryun"},
 ];
 
-const APP_VERSION="2.1.0";
+const APP_VERSION="2.2.1";
 const STORAGE_KEY="bot_v4";
 
 function migrateData(data){
@@ -1288,6 +1334,8 @@ function migrateData(data){
   if(!data.myQuotes)data.myQuotes=[];
   if(!data.wishlist)data.wishlist=[];
   if(!data.hiddenTabs)data.hiddenTabs=[];
+  if(!data.routineTemplates)data.routineTemplates=[];
+  if(!data.routineLog)data.routineLog={};
   data._version=APP_VERSION;
   return data;
 }
@@ -1301,7 +1349,7 @@ let activeBodyKey='';
 let activeJournalKey='';
 let activeMedsKey='';
 let activeMoneyMonth='';
-let newPriority="rw";
+let newPriority="high";
 let newHabitCat="critical";
 
 function save(){
@@ -1377,7 +1425,7 @@ function showView(v){
   document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
   document.getElementById('view-'+v).classList.add('active');
-  const idx=['today','tasks','journal','wins','learn','goals','hard','meds','body','money','movies','quotes','wishlist','breathe','week','review','graphs','report','habits_mgr','settings'].indexOf(v);
+  const idx=['today','routine','tasks','journal','wins','learn','goals','hard','meds','body','money','movies','quotes','wishlist','breathe','week','review','graphs','report','habits_mgr','settings'].indexOf(v);
   if(idx>=0)document.querySelectorAll('.nav-item')[idx].classList.add('active');
   // Reset date pickers to today on each navigation
   const td=todayKey();
@@ -1385,7 +1433,7 @@ function showView(v){
   if(v==='body'){activeBodyKey=td;const dp=document.getElementById('body-date-picker');if(dp)dp.value=td;}
   if(v==='journal'){activeJournalKey=td;const dp=document.getElementById('journal-date-picker');if(dp)dp.value=td;}
   if(v==='meds'){activeMedsKey=td;const dp=document.getElementById('meds-date-picker');if(dp)dp.value=td;}
-  const renders={tasks:renderTasks,journal:renderJournal,wins:renderWins,learn:renderLearn,goals:renderGoals,hard:renderHard,meds:renderMeds,body:renderBody,money:renderMoney,movies:renderMovies,quotes:renderMyQuotes,wishlist:renderWishlist,breathe:renderBreathe,week:renderWeek,review:renderWeeklyReview,graphs:renderGraphs,report:renderReport,habits_mgr:renderHabitsMgr,settings:renderSettings};
+  const renders={routine:renderRoutine,tasks:renderTasks,journal:renderJournal,wins:renderWins,learn:renderLearn,goals:renderGoals,hard:renderHard,meds:renderMeds,body:renderBody,money:renderMoney,movies:renderMovies,quotes:renderMyQuotes,wishlist:renderWishlist,breathe:renderBreathe,week:renderWeek,review:renderWeeklyReview,graphs:renderGraphs,report:renderReport,habits_mgr:renderHabitsMgr,settings:renderSettings};
   if(renders[v])renders[v]();
 }
 
@@ -1844,7 +1892,7 @@ function updateRadar(){
   charts.radar=new Chart(ctx,{type:'radar',data:{labels:HABITS.map(h=>h.icon+' '+h.label.substring(0,9)),datasets:[{data:HABITS.map(h=>td[h.id]?1:0),backgroundColor:'rgba(251,191,36,0.08)',borderColor:'#fbbf24',borderWidth:2,pointBackgroundColor:HABITS.map(h=>CAT[h.cat].color),pointRadius:4}]},options:{responsive:true,maintainAspectRatio:false,scales:{r:{min:0,max:1,ticks:{display:false},grid:{color:'#1e1e35'},angleLines:{color:'#1e1e35'},pointLabels:{color:'#3a3f52',font:{size:8,family:'Space Mono'}}}},plugins:{legend:{display:false}}}});
 }
 
-function setNewPriority(p){newPriority=p;['rw','high','mid','low'].forEach(x=>{const el=document.getElementById('pri-'+x);if(el)el.style.opacity=x===p?'1':'0.4';});}
+function setNewPriority(p){newPriority=p;['high','mid','low'].forEach(x=>{const el=document.getElementById('pri-'+x);if(el)el.style.opacity=x===p?'1':'0.4';});}
 
 function addTask(){
   const input=document.getElementById('task-input');const text=input.value.trim();if(!text)return;
@@ -1872,14 +1920,13 @@ function rolloverTasks(){
   save();
 }
 
-function quickAddTask(){
-  const input=document.getElementById('quick-task-input');
+function quickAddRoutine(){
+  const input=document.getElementById('quick-routine-input');
   const text=input.value.trim();if(!text)return;
-  const today=todayKey();if(!db.tasks)db.tasks={};if(!db.tasks[today])db.tasks[today]=[];
-  db.tasks[today].push({id:Date.now(),text,done:false,priority:'rw'});
+  if(!db.routineTemplates)db.routineTemplates=[];
+  db.routineTemplates.push({id:Date.now(),name:text,note:''});
   input.value='';save();
-  // Show confirmation flash on today page instead of navigating away
-  const fl=document.createElement('div');fl.style.cssText='position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:var(--health);color:#fff;padding:8px 18px;border-radius:20px;font-size:13px;font-family:Space Mono,monospace;z-index:999;';fl.textContent='✓ TASK ADDED';document.body.appendChild(fl);setTimeout(()=>fl.remove(),1800);
+  const fl=document.createElement('div');fl.style.cssText='position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:var(--purple);color:#fff;padding:8px 18px;border-radius:20px;font-size:13px;font-family:Space Mono,monospace;z-index:999;';fl.textContent='🔄 ADDED TO ROUTINE';document.body.appendChild(fl);setTimeout(()=>fl.remove(),1800);
 }
 
 function renderTasks(){
@@ -1888,11 +1935,11 @@ function renderTasks(){
   document.getElementById('tasks-date').textContent=new Date().toDateString().toUpperCase();
   const today=todayKey();const tasks=(db.tasks&&db.tasks[today])||[];
   const list=document.getElementById('task-list');list.innerHTML='';
-  const sorted=[...tasks].sort((a,b)=>({rw:0,high:1,mid:2,low:3}[a.priority]??1)-({rw:0,high:1,mid:2,low:3}[b.priority]??1));
+  const sorted=[...tasks].sort((a,b)=>({high:0,mid:1,low:2}[a.priority]??1)-({high:0,mid:1,low:2}[b.priority]??1));
   sorted.forEach(task=>{
     const rollTag=task.rolledFrom?`<span style="font-size:10px;color:var(--purple);background:rgba(168,85,247,0.12);padding:1px 5px;border-radius:3px;margin-left:4px;">↩ CARRIED</span>`:'';
     const div=document.createElement('div');div.className='task-item'+(task.done?' done-task':'');
-    div.innerHTML=`<div class="task-check ${task.done?'checked':''}" onclick="toggleTask('${today}',${task.id})">${task.done?'✓':''}</div><span class="task-text" onclick="toggleTask('${today}',${task.id})">${task.text}${rollTag}</span><span class="task-priority p-${task.priority}">${task.priority==='rw'?'🔄 RW':task.priority.toUpperCase()}</span><button class="task-del" onclick="deleteTask('${today}',${task.id})">✕</button>`;
+    div.innerHTML=`<div class="task-check ${task.done?'checked':''}" onclick="toggleTask('${today}',${task.id})">${task.done?'✓':''}</div><span class="task-text" onclick="toggleTask('${today}',${task.id})">${task.text}${rollTag}</span><span class="task-priority p-${task.priority}">${task.priority.toUpperCase()}</span><button class="task-del" onclick="deleteTask('${today}',${task.id})">✕</button>`;
     list.appendChild(div);
   });
   const done=tasks.filter(t=>t.done).length,pending=tasks.filter(t=>!t.done).length;
@@ -2030,6 +2077,8 @@ function saveRetestDate(){
 
 function renderSettings(){
   renderTabToggles();
+  const vd=document.getElementById('current-version-display');
+  if(vd)vd.textContent=APP_VERSION;
   const rd=retestDays();document.getElementById('retest-big').textContent=rd;
   if(db.retestStart){
     const days=db.retestDays||90;
@@ -2051,6 +2100,12 @@ function renderSettings(){
       ${db._lastSaved?`<div style="font-size:13px;color:var(--muted);margin-top:6px;">Last saved: ${new Date(db._lastSaved).toLocaleString()}</div>`:''}
     </div>
   `;
+}
+
+function applyUpdate(){
+  if(confirm('Reload the app? Your data is safe — it lives in localStorage and is never affected by updates.')){
+    window.location.reload(true);
+  }
 }
 
 function exportData(){const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='BackOnTrack_v'+APP_VERSION+'_'+todayKey()+'.json';a.click();}
@@ -2609,6 +2664,7 @@ function renderWishItems(){
 
 // ─── TAB VISIBILITY SYSTEM ───────────────────────────────────────────────────
 const ALL_TOGGLEABLE_TABS=[
+  {id:'routine',icon:'🔄',label:'ROUTINE WORK'},
   {id:'tasks',icon:'📋',label:'TASKS'},
   {id:'journal',icon:'📓',label:'JOURNAL'},
   {id:'wins',icon:'⭐',label:'WINS LOG'},
@@ -2683,6 +2739,92 @@ function renderTabToggles(){
     `;
     panel.appendChild(row);
   });
+}
+
+
+// ─── ROUTINE WORK ─────────────────────────────────────────────────────────────
+function addRoutineTemplate(){
+  const name=document.getElementById('routine-name-input').value.trim();
+  if(!name)return;
+  const note=document.getElementById('routine-note-input').value.trim();
+  if(!db.routineTemplates)db.routineTemplates=[];
+  db.routineTemplates.push({id:Date.now(),name,note});
+  document.getElementById('routine-name-input').value='';
+  document.getElementById('routine-note-input').value='';
+  save();
+  const fl=document.getElementById('routine-flash');fl.classList.add('show');setTimeout(()=>fl.classList.remove('show'),2000);
+  renderRoutine();
+}
+
+function deleteRoutineTemplate(id){
+  db.routineTemplates=(db.routineTemplates||[]).filter(t=>t.id!==id);
+  save();renderRoutine();
+}
+
+function toggleRoutineItem(id){
+  const today=todayKey();
+  if(!db.routineLog)db.routineLog={};
+  if(!db.routineLog[today])db.routineLog[today]={};
+  if(db.routineLog[today][id]){
+    delete db.routineLog[today][id];
+  } else {
+    db.routineLog[today][id]=true;
+  }
+  save();renderRoutine();
+}
+
+function renderRoutine(){
+  const today=todayKey();
+  document.getElementById('routine-date').textContent=new Date().toDateString().toUpperCase();
+  const templates=db.routineTemplates||[];
+  const log=(db.routineLog&&db.routineLog[today])||{};
+
+  // Progress label
+  const done=templates.filter(t=>log[t.id]).length;
+  const total=templates.length;
+  const progEl=document.getElementById('routine-progress-label');
+  if(progEl)progEl.textContent=total?done+'/'+total+' DONE':'';
+
+  // Today list
+  const list=document.getElementById('routine-list');
+  if(list){
+    list.innerHTML='';
+    if(!templates.length){
+      list.innerHTML='<div style="text-align:center;padding:30px;font-size:14px;color:var(--muted);">No routines yet. Add some on the left.</div>';
+    } else {
+      templates.forEach(t=>{
+        const isDone=!!log[t.id];
+        const div=document.createElement('div');
+        div.className='habit-row'+(isDone?' done-body':'');
+        div.innerHTML=`<div class="habit-check">${isDone?'✓':''}</div><div class="habit-info"><div class="habit-name">🔄 ${t.name}</div>${t.note?`<div class="habit-desc">${t.note}</div>`:''}</div><div class="done-tag">DONE</div>`;
+        div.onclick=()=>{div.classList.add('popping');setTimeout(()=>div.classList.remove('popping'),200);toggleRoutineItem(t.id);};
+        list.appendChild(div);
+      });
+      // Progress bar
+      const bar=document.createElement('div');
+      bar.style.cssText='margin-top:14px;padding-top:12px;border-top:1px solid var(--border);';
+      const pct=total?Math.round(done/total*100):0;
+      const col=pct===100?'#22c55e':pct>=60?'#3b82f6':'#fbbf24';
+      bar.innerHTML=`<div style="display:flex;justify-content:space-between;margin-bottom:6px;"><span style="font-size:13px;color:var(--muted);letter-spacing:0.5px;">PROGRESS</span><span style="font-size:13px;color:${col};">${pct}%</span></div><div style="background:var(--surface2);border-radius:4px;height:5px;overflow:hidden;"><div style="height:100%;border-radius:4px;background:${col};width:${pct}%;transition:width 0.5s;"></div></div>`;
+      list.appendChild(bar);
+    }
+  }
+
+  // Template management list
+  const tmpl=document.getElementById('routine-templates');
+  if(tmpl){
+    tmpl.innerHTML='';
+    if(!templates.length){
+      tmpl.innerHTML='<div style="font-size:13px;color:var(--muted);text-align:center;padding:16px;">No templates yet.</div>';
+    } else {
+      templates.forEach(t=>{
+        const div=document.createElement('div');
+        div.style.cssText='display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:10px 13px;margin-bottom:6px;';
+        div.innerHTML=`<span style="font-size:18px;">🔄</span><div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:700;color:var(--text-strong);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.name}</div>${t.note?`<div style="font-size:11px;color:var(--muted);margin-top:2px;">${t.note}</div>`:''}</div><button onclick="deleteRoutineTemplate(${t.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;flex-shrink:0;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='var(--muted)'">✕</button>`;
+        tmpl.appendChild(div);
+      });
+    }
+  }
 }
 
 // ─── BREATHE ─────────────────────────────────────────────────────────────────
@@ -2830,7 +2972,7 @@ function applyTheme(isLight){
   const active=document.querySelector('.view.active');
   if(active){
     const v=active.id.replace('view-','');
-    const renders={today:renderToday,tasks:renderTasks,week:renderWeek,graphs:renderGraphs,report:renderReport,meds:renderMeds,body:renderBody,money:renderMoney,journal:renderJournal,wins:renderWins,learn:renderLearn,goals:renderGoals,hard:renderHard,breathe:renderBreathe,habits_mgr:renderHabitsMgr,settings:renderSettings,review:renderWeeklyReview,movies:renderMovies,quotes:renderMyQuotes,wishlist:renderWishlist};
+    const renders={today:renderToday,routine:renderRoutine,tasks:renderTasks,week:renderWeek,graphs:renderGraphs,report:renderReport,meds:renderMeds,body:renderBody,money:renderMoney,journal:renderJournal,wins:renderWins,learn:renderLearn,goals:renderGoals,hard:renderHard,breathe:renderBreathe,habits_mgr:renderHabitsMgr,settings:renderSettings,review:renderWeeklyReview,movies:renderMovies,quotes:renderMyQuotes,wishlist:renderWishlist};
     if(renders[v])renders[v]();
     if(v==='today')updateRadar();
   }
@@ -2926,6 +3068,7 @@ setTimeout(showVersionToast,1200);
 <!-- MOBILE BOTTOM NAV -->
 <nav class="mobile-nav" id="mobile-nav">
   <button class="mobile-nav-item active" onclick="mobNav('today',this)"><span class="mn-icon">✅</span>TODAY</button>
+  <button class="mobile-nav-item" onclick="mobNav('routine',this)"><span class="mn-icon">🔄</span>ROUTINE</button>
   <button class="mobile-nav-item" onclick="mobNav('tasks',this)"><span class="mn-icon">📋</span>TASKS</button>
   <button class="mobile-nav-item" onclick="mobNav('journal',this)"><span class="mn-icon">📓</span>JOURNAL</button>
   <button class="mobile-nav-item" onclick="mobNav('wins',this)"><span class="mn-icon">⭐</span>WINS</button>
