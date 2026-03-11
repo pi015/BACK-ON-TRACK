@@ -9,6 +9,7 @@
 <meta name="theme-color" content="#06060f" id="theme-color-meta"/>
 <title>Back On Track</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&display=swap');
 :root{
@@ -834,6 +835,20 @@ body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;d
       </div>
 
 
+
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">GOOGLE DRIVE BACKUP</span></div>
+        <div class="panel-body">
+          <div style="font-size:13px;color:var(--muted);letter-spacing:0.5px;margin-bottom:9px;">ONE-TAP BACKUP TO YOUR GOOGLE DRIVE</div>
+          <div style="font-size:13px;color:var(--muted);line-height:1.8;margin-bottom:14px;">Saves your entire data as a JSON file to your Drive. Restore it anytime from any device. Needs internet only for backup/restore — everything else still works offline.</div>
+          <div id="gdrive-status" style="margin-bottom:12px;"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;" id="gdrive-buttons">
+            <button class="exp-btn" id="gdrive-signin-btn" onclick="gdriveSignIn()" style="background:rgba(66,133,244,0.1);border-color:rgba(66,133,244,0.4);color:#4285f4;">
+              <span style="font-size:16px;margin-right:4px;">G</span> CONNECT GOOGLE
+            </button>
+          </div>
+        </div>
+      </div>
       <div class="panel">
         <div class="panel-header"><span class="panel-title">APP LOCK</span></div>
         <div class="panel-body" id="pin-settings-panel"></div>
@@ -1398,7 +1413,7 @@ const QUOTES=[
   {text:"Motivation gets you started. Habit keeps you going.",author:"— Jim Ryun"},
 ];
 
-const APP_VERSION="2.3.0";
+const APP_VERSION="2.4.0";
 const STORAGE_KEY="bot_v4";
 
 function migrateData(data){
@@ -2996,6 +3011,154 @@ function renderPinSettings(){
         </div>
       </div>
       <button class="save-btn" onclick="openPinSetup(false)">🔒 SET PIN LOCK</button>`;
+  }
+}
+
+
+// ─── GOOGLE DRIVE BACKUP ─────────────────────────────────────────────────────
+const GDRIVE_CLIENT_ID = '292440171311-c4ebh0tcgij5k8d528tffa8t73hnhtbk.apps.googleusercontent.com';
+const GDRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
+const GDRIVE_FILENAME = 'BackOnTrack_backup.json';
+let gdriveToken = null;
+let gdriveFileId = null; // cached file ID to overwrite same file
+
+function gdriveSignIn(){
+  const client = google.accounts.oauth2.initTokenClient({
+    client_id: GDRIVE_CLIENT_ID,
+    scope: GDRIVE_SCOPE,
+    callback: (resp) => {
+      if(resp.error){ gdriveSetStatus('❌ Sign in failed: '+resp.error, '#ef4444'); return; }
+      gdriveToken = resp.access_token;
+      gdriveSetStatus('✅ Connected to Google Drive', '#22c55e');
+      gdriveRenderButtons(true);
+    },
+  });
+  client.requestAccessToken();
+}
+
+function gdriveSignOut(){
+  if(gdriveToken){
+    google.accounts.oauth2.revoke(gdriveToken);
+    gdriveToken = null;
+    gdriveFileId = null;
+  }
+  gdriveSetStatus('', '');
+  gdriveRenderButtons(false);
+}
+
+function gdriveRenderButtons(connected){
+  const btns = document.getElementById('gdrive-buttons');
+  if(!btns) return;
+  if(connected){
+    btns.innerHTML = `
+      <button class="save-btn" onclick="gdriveBackup()" style="margin-top:0;">
+        ☁️ BACKUP TO DRIVE
+      </button>
+      <button class="exp-btn" onclick="gdriveRestore()">
+        ⬇ RESTORE FROM DRIVE
+      </button>
+      <button class="exp-btn" onclick="gdriveSignOut()" style="font-size:11px;">
+        DISCONNECT
+      </button>`;
+  } else {
+    btns.innerHTML = `
+      <button class="exp-btn" id="gdrive-signin-btn" onclick="gdriveSignIn()" style="background:rgba(66,133,244,0.1);border-color:rgba(66,133,244,0.4);color:#4285f4;">
+        <span style="font-size:16px;margin-right:4px;">G</span> CONNECT GOOGLE
+      </button>`;
+  }
+}
+
+function gdriveSetStatus(msg, color){
+  const el = document.getElementById('gdrive-status');
+  if(!el) return;
+  if(!msg){ el.innerHTML=''; return; }
+  el.innerHTML = `<div style="font-size:13px;color:${color};letter-spacing:0.5px;padding:8px 0;">${msg}</div>`;
+}
+
+async function gdriveBackup(){
+  if(!gdriveToken){ gdriveSetStatus('❌ Not connected. Sign in first.','#ef4444'); return; }
+  gdriveSetStatus('⏳ Backing up...','#fbbf24');
+  try{
+    const data = JSON.stringify(db, null, 2);
+    const blob = new Blob([data], {type:'application/json'});
+
+    // Check if file already exists
+    if(!gdriveFileId){
+      const searchRes = await fetch(
+        `https://www.googleapis.com/drive/v3/files?q=name='${GDRIVE_FILENAME}'&spaces=drive&fields=files(id,name)`,
+        {headers:{Authorization:'Bearer '+gdriveToken}}
+      );
+      const searchData = await searchRes.json();
+      if(searchData.files && searchData.files.length > 0){
+        gdriveFileId = searchData.files[0].id;
+      }
+    }
+
+    if(gdriveFileId){
+      // Update existing file
+      const res = await fetch(
+        `https://www.googleapis.com/upload/drive/v3/files/${gdriveFileId}?uploadType=media`,
+        {method:'PATCH', headers:{Authorization:'Bearer '+gdriveToken,'Content-Type':'application/json'}, body:data}
+      );
+      if(!res.ok) throw new Error('Update failed');
+    } else {
+      // Create new file
+      const meta = JSON.stringify({name: GDRIVE_FILENAME, mimeType:'application/json'});
+      const form = new FormData();
+      form.append('metadata', new Blob([meta],{type:'application/json'}));
+      form.append('file', blob);
+      const res = await fetch(
+        'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',
+        {method:'POST', headers:{Authorization:'Bearer '+gdriveToken}, body:form}
+      );
+      if(!res.ok) throw new Error('Upload failed');
+      const newFile = await res.json();
+      gdriveFileId = newFile.id;
+    }
+
+    const now = new Date().toLocaleString();
+    gdriveSetStatus('✅ Backed up at '+now,'#22c55e');
+  } catch(e){
+    gdriveSetStatus('❌ Backup failed: '+e.message,'#ef4444');
+    // Token may have expired — reset
+    if(e.message.includes('401') || e.message.includes('403')){
+      gdriveToken = null;
+      gdriveRenderButtons(false);
+    }
+  }
+}
+
+async function gdriveRestore(){
+  if(!gdriveToken){ gdriveSetStatus('❌ Not connected. Sign in first.','#ef4444'); return; }
+  if(!confirm('Restore from Google Drive? This will replace ALL current data with your last backup.')) return;
+  gdriveSetStatus('⏳ Restoring...','#fbbf24');
+  try{
+    // Find file
+    const searchRes = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q=name='${GDRIVE_FILENAME}'&spaces=drive&fields=files(id,name)`,
+      {headers:{Authorization:'Bearer '+gdriveToken}}
+    );
+    const searchData = await searchRes.json();
+    if(!searchData.files || !searchData.files.length){
+      gdriveSetStatus('❌ No backup found on Drive','#ef4444'); return;
+    }
+    const fileId = searchData.files[0].id;
+    gdriveFileId = fileId;
+    // Download
+    const dlRes = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+      {headers:{Authorization:'Bearer '+gdriveToken}}
+    );
+    if(!dlRes.ok) throw new Error('Download failed');
+    const imported = await dlRes.json();
+    db = migrateData(imported);
+    if(db.customHabits) HABITS = db.customHabits;
+    save();
+    applyTabVisibility();
+    renderToday();
+    gdriveSetStatus('✅ Restored successfully!','#22c55e');
+  } catch(e){
+    gdriveSetStatus('❌ Restore failed: '+e.message,'#ef4444');
   }
 }
 
