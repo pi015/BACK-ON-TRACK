@@ -117,6 +117,18 @@ body.light .skipped .habit-name{color:var(--muted)!important;}
 .pin-cancel{font-size:11px;letter-spacing:0.5px;}
 body.light .pin-btn{background:var(--surface2);color:var(--text);}
 
+
+/* ── ROUTINE & HABITS MGR — prevent overflow ── */
+#view-routine .panel,#view-habits_mgr .panel{overflow:hidden;}
+#view-routine input,#view-habits_mgr input,#view-routine textarea{
+  max-width:100%;box-sizing:border-box;
+}
+/* On mobile: reorder routine so TODAY'S ROUTINE is on top */
+@media(max-width:768px){
+  #view-routine .grid-2{display:flex;flex-direction:column;}
+  #view-routine .grid-2 > div:last-child{order:-1;}
+}
+
 /* VERSION TOAST */
 .version-toast{position:fixed;bottom:calc(90px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:8px 18px;font-size:13px;letter-spacing:0.5px;color:var(--muted);z-index:999;opacity:0;transition:opacity 0.4s;pointer-events:none;white-space:nowrap;}
 .version-toast.show{opacity:1;}
@@ -630,7 +642,7 @@ body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;d
 </div>
 
 <!-- ROUTINE WORK -->
-<div class="view" id="view-routine">
+<div class="view" id="view-routine" style="overflow-x:hidden;">
   <div class="topbar"><div class="page-title">ROUTINE WORK</div><div class="badge" id="routine-date"></div></div>
   <div style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.7;">Your recurring daily tasks. Define them once — they show up every day automatically. Tick them off as you go.</div>
   <div class="grid-2">
@@ -874,7 +886,7 @@ body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;d
 </div>
 
 <!-- MANAGE HABITS -->
-<div class="view" id="view-habits_mgr" style="overflow-x:hidden;">
+<div class="view" id="view-habits_mgr" style="overflow-x:hidden;max-width:100%;">
   <div class="topbar"><div class="page-title">MANAGE HABITS</div></div>
   <div class="grid-2">
     <div>
@@ -1413,7 +1425,7 @@ const QUOTES=[
   {text:"Motivation gets you started. Habit keeps you going.",author:"— Jim Ryun"},
 ];
 
-const APP_VERSION="2.5.1";
+const APP_VERSION="2.5.2";
 const STORAGE_KEY="bot_v4";
 
 function migrateData(data){
