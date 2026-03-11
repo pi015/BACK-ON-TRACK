@@ -92,6 +92,30 @@ body.light .perfect-banner{background:rgba(34,197,94,0.06);}
 body.light .habit-row.skipped{background:rgba(100,116,139,0.05)!important;border-color:rgba(100,116,139,0.2)!important;}
 body.light .skipped .habit-name{color:var(--muted)!important;}
 
+
+/* ── PIN LOCK ── */
+#pin-overlay,#pin-setup-overlay{display:none;}
+#pin-overlay.show,#pin-setup-overlay.show{display:flex;}
+.pin-dot{
+  width:16px;height:16px;border-radius:50%;
+  border:2px solid var(--muted);background:transparent;
+  transition:all 0.15s;
+}
+.pin-dot.filled{background:var(--gold);border-color:var(--gold);}
+.pin-dot.error{background:var(--critical);border-color:var(--critical);}
+.pin-btn{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:50%;width:72px;height:72px;
+  font-family:'Space Mono',monospace;font-size:22px;font-weight:700;
+  color:var(--text);cursor:pointer;
+  transition:all 0.1s;-webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+}
+.pin-btn:active{background:var(--surface3);transform:scale(0.94);}
+.pin-del{font-size:18px;}
+.pin-cancel{font-size:11px;letter-spacing:0.5px;}
+body.light .pin-btn{background:var(--surface2);color:var(--text);}
+
 /* VERSION TOAST */
 .version-toast{position:fixed;bottom:calc(90px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:8px 18px;font-size:13px;letter-spacing:0.5px;color:var(--muted);z-index:999;opacity:0;transition:opacity 0.4s;pointer-events:none;white-space:nowrap;}
 .version-toast.show{opacity:1;}
@@ -395,6 +419,65 @@ body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;d
 <body>
 
 <!-- MOBILE TOP BAR -->
+
+<!-- PIN LOCK OVERLAY -->
+<div id="pin-overlay" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:99999;flex-direction:column;align-items:center;justify-content:center;padding:30px;">
+  <div style="text-align:center;max-width:320px;width:100%;">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--gold);letter-spacing:1px;margin-bottom:6px;">BACK ON TRACK</div>
+    <div style="font-size:13px;color:var(--muted);letter-spacing:0.5px;margin-bottom:40px;">ENTER YOUR PIN</div>
+    <div id="pin-dots" style="display:flex;justify-content:center;gap:16px;margin-bottom:36px;">
+      <div class="pin-dot"></div>
+      <div class="pin-dot"></div>
+      <div class="pin-dot"></div>
+      <div class="pin-dot"></div>
+    </div>
+    <div id="pin-error" style="font-size:13px;color:var(--critical);letter-spacing:0.5px;margin-bottom:20px;opacity:0;transition:opacity 0.2s;min-height:18px;">WRONG PIN</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:280px;margin:0 auto;">
+      <button class="pin-btn" onclick="pinPress('1')">1</button>
+      <button class="pin-btn" onclick="pinPress('2')">2</button>
+      <button class="pin-btn" onclick="pinPress('3')">3</button>
+      <button class="pin-btn" onclick="pinPress('4')">4</button>
+      <button class="pin-btn" onclick="pinPress('5')">5</button>
+      <button class="pin-btn" onclick="pinPress('6')">6</button>
+      <button class="pin-btn" onclick="pinPress('7')">7</button>
+      <button class="pin-btn" onclick="pinPress('8')">8</button>
+      <button class="pin-btn" onclick="pinPress('9')">9</button>
+      <div></div>
+      <button class="pin-btn" onclick="pinPress('0')">0</button>
+      <button class="pin-btn pin-del" onclick="pinBackspace()">⌫</button>
+    </div>
+  </div>
+</div>
+
+<!-- PIN SETUP OVERLAY -->
+<div id="pin-setup-overlay" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:99999;flex-direction:column;align-items:center;justify-content:center;padding:30px;">
+  <div style="text-align:center;max-width:320px;width:100%;">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--gold);letter-spacing:1px;margin-bottom:6px;" id="pin-setup-title">SET A NEW PIN</div>
+    <div style="font-size:13px;color:var(--muted);letter-spacing:0.5px;margin-bottom:40px;" id="pin-setup-sub">CHOOSE A 4-DIGIT PIN</div>
+    <div id="pin-setup-dots" style="display:flex;justify-content:center;gap:16px;margin-bottom:36px;">
+      <div class="pin-dot"></div>
+      <div class="pin-dot"></div>
+      <div class="pin-dot"></div>
+      <div class="pin-dot"></div>
+    </div>
+    <div id="pin-setup-error" style="font-size:13px;color:var(--critical);letter-spacing:0.5px;margin-bottom:20px;opacity:0;min-height:18px;">PINS DON'T MATCH</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:280px;margin:0 auto;">
+      <button class="pin-btn" onclick="pinSetupPress('1')">1</button>
+      <button class="pin-btn" onclick="pinSetupPress('2')">2</button>
+      <button class="pin-btn" onclick="pinSetupPress('3')">3</button>
+      <button class="pin-btn" onclick="pinSetupPress('4')">4</button>
+      <button class="pin-btn" onclick="pinSetupPress('5')">5</button>
+      <button class="pin-btn" onclick="pinSetupPress('6')">6</button>
+      <button class="pin-btn" onclick="pinSetupPress('7')">7</button>
+      <button class="pin-btn" onclick="pinSetupPress('8')">8</button>
+      <button class="pin-btn" onclick="pinSetupPress('9')">9</button>
+      <button class="pin-btn pin-cancel" onclick="cancelPinSetup()" style="font-size:11px;">CANCEL</button>
+      <button class="pin-btn" onclick="pinSetupPress('0')">0</button>
+      <button class="pin-btn pin-del" onclick="pinSetupBackspace()">⌫</button>
+    </div>
+  </div>
+</div>
+
 <div class="mobile-topbar">
   <div class="mobile-topbar-title">BACK ON TRACK</div>
   <div style="display:flex;align-items:center;gap:10px;">
@@ -750,6 +833,11 @@ body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;d
         <div class="panel-body" id="tab-toggles-panel"></div>
       </div>
 
+
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">APP LOCK</span></div>
+        <div class="panel-body" id="pin-settings-panel"></div>
+      </div>
       <div class="panel">
         <div class="panel-header"><span class="panel-title">APP UPDATE</span></div>
         <div class="panel-body">
@@ -1310,7 +1398,7 @@ const QUOTES=[
   {text:"Motivation gets you started. Habit keeps you going.",author:"— Jim Ryun"},
 ];
 
-const APP_VERSION="2.2.1";
+const APP_VERSION="2.3.0";
 const STORAGE_KEY="bot_v4";
 
 function migrateData(data){
@@ -2077,6 +2165,7 @@ function saveRetestDate(){
 
 function renderSettings(){
   renderTabToggles();
+  renderPinSettings();
   const vd=document.getElementById('current-version-display');
   if(vd)vd.textContent=APP_VERSION;
   const rd=retestDays();document.getElementById('retest-big').textContent=rd;
@@ -2742,6 +2831,174 @@ function renderTabToggles(){
 }
 
 
+
+// ─── PIN LOCK SYSTEM ─────────────────────────────────────────────────────────
+let pinBuffer='';
+let pinSetupBuffer='';
+let pinSetupStep=1;// 1=enter new pin, 2=confirm
+let pinSetupFirst='';
+
+function initPinLock(){
+  const pin=localStorage.getItem('bot_pin');
+  if(pin){
+    // Show lock screen
+    document.getElementById('pin-overlay').classList.add('show');
+    updatePinDots('pin-dots', 0);
+  }
+}
+
+function pinPress(d){
+  if(pinBuffer.length>=4)return;
+  pinBuffer+=d;
+  updatePinDots('pin-dots', pinBuffer.length);
+  if(pinBuffer.length===4){
+    setTimeout(()=>checkPin(),120);
+  }
+}
+
+function pinBackspace(){
+  pinBuffer=pinBuffer.slice(0,-1);
+  updatePinDots('pin-dots', pinBuffer.length);
+  // Clear error
+  const err=document.getElementById('pin-error');
+  err.style.opacity='0';
+}
+
+function checkPin(){
+  const saved=localStorage.getItem('bot_pin');
+  if(pinBuffer===saved){
+    document.getElementById('pin-overlay').classList.remove('show');
+    pinBuffer='';
+    updatePinDots('pin-dots',0);
+  } else {
+    // Wrong — shake dots red
+    const dots=document.querySelectorAll('#pin-dots .pin-dot');
+    dots.forEach(d=>{d.classList.add('error');});
+    document.getElementById('pin-error').style.opacity='1';
+    setTimeout(()=>{
+      dots.forEach(d=>{d.classList.remove('error');});
+      pinBuffer='';
+      updatePinDots('pin-dots',0);
+    },600);
+  }
+}
+
+function updatePinDots(containerId, count){
+  const dots=document.querySelectorAll('#'+containerId+' .pin-dot');
+  dots.forEach((d,i)=>{
+    d.classList.toggle('filled', i<count);
+    d.classList.remove('error');
+  });
+}
+
+// ── PIN SETUP ────────────────────────────────────────────────────────────────
+function openPinSetup(isChange=false){
+  pinSetupBuffer='';
+  pinSetupStep=1;
+  pinSetupFirst='';
+  const overlay=document.getElementById('pin-setup-overlay');
+  const title=document.getElementById('pin-setup-title');
+  const sub=document.getElementById('pin-setup-sub');
+  title.textContent=isChange?'CHANGE PIN':'SET A NEW PIN';
+  sub.textContent='CHOOSE A 4-DIGIT PIN';
+  document.getElementById('pin-setup-error').style.opacity='0';
+  updatePinDots('pin-setup-dots',0);
+  overlay.classList.add('show');
+}
+
+function cancelPinSetup(){
+  document.getElementById('pin-setup-overlay').classList.remove('show');
+  pinSetupBuffer='';pinSetupStep=1;pinSetupFirst='';
+  renderPinSettings();
+}
+
+function removePinLock(){
+  if(!confirm('Remove PIN lock? Anyone can open the app.'))return;
+  localStorage.removeItem('bot_pin');
+  renderPinSettings();
+}
+
+function pinSetupPress(d){
+  if(pinSetupBuffer.length>=4)return;
+  pinSetupBuffer+=d;
+  updatePinDots('pin-setup-dots',pinSetupBuffer.length);
+  if(pinSetupBuffer.length===4){
+    setTimeout(()=>checkPinSetup(),120);
+  }
+}
+
+function pinSetupBackspace(){
+  pinSetupBuffer=pinSetupBuffer.slice(0,-1);
+  updatePinDots('pin-setup-dots',pinSetupBuffer.length);
+}
+
+function checkPinSetup(){
+  if(pinSetupStep===1){
+    pinSetupFirst=pinSetupBuffer;
+    pinSetupBuffer='';
+    pinSetupStep=2;
+    document.getElementById('pin-setup-sub').textContent='CONFIRM YOUR PIN';
+    updatePinDots('pin-setup-dots',0);
+  } else {
+    if(pinSetupBuffer===pinSetupFirst){
+      // Save
+      localStorage.setItem('bot_pin',pinSetupBuffer);
+      document.getElementById('pin-setup-overlay').classList.remove('show');
+      pinSetupBuffer='';pinSetupStep=1;pinSetupFirst='';
+      renderPinSettings();
+      // Show toast
+      const fl=document.createElement('div');
+      fl.style.cssText='position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:var(--health);color:#fff;padding:8px 18px;border-radius:20px;font-size:13px;font-family:Space Mono,monospace;z-index:99998;letter-spacing:0.5px;';
+      fl.textContent='🔒 PIN SET';
+      document.body.appendChild(fl);
+      setTimeout(()=>fl.remove(),2000);
+    } else {
+      // Mismatch
+      const dots=document.querySelectorAll('#pin-setup-dots .pin-dot');
+      dots.forEach(d=>d.classList.add('error'));
+      document.getElementById('pin-setup-error').style.opacity='1';
+      setTimeout(()=>{
+        dots.forEach(d=>d.classList.remove('error'));
+        pinSetupBuffer='';
+        pinSetupStep=1;
+        pinSetupFirst='';
+        document.getElementById('pin-setup-sub').textContent='CHOOSE A 4-DIGIT PIN';
+        updatePinDots('pin-setup-dots',0);
+        document.getElementById('pin-setup-error').style.opacity='0';
+      },700);
+    }
+  }
+}
+
+function renderPinSettings(){
+  const panel=document.getElementById('pin-settings-panel');if(!panel)return;
+  const hasPin=!!localStorage.getItem('bot_pin');
+  if(hasPin){
+    panel.innerHTML=`
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+        <div style="font-size:22px;">🔒</div>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--health);letter-spacing:0.5px;">PIN LOCK IS ON</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px;">App is protected</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="exp-btn" onclick="openPinSetup(true)">✏️ CHANGE PIN</button>
+        <button class="exp-btn danger" onclick="removePinLock()">🔓 REMOVE LOCK</button>
+      </div>`;
+  } else {
+    panel.innerHTML=`
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+        <div style="font-size:22px;">🔓</div>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--muted);letter-spacing:0.5px;">NO PIN SET</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px;">Anyone can open the app</div>
+        </div>
+      </div>
+      <button class="save-btn" onclick="openPinSetup(false)">🔒 SET PIN LOCK</button>`;
+  }
+}
+
 // ─── ROUTINE WORK ─────────────────────────────────────────────────────────────
 function addRoutineTemplate(){
   const name=document.getElementById('routine-name-input').value.trim();
@@ -3051,6 +3308,7 @@ activeMedsKey=todayKey();
 activeMoneyMonth=todayKey().slice(0,7);
 initTheme();
 applyTabVisibility();
+initPinLock();
 // Set all date pickers to today on load
 (function(){
   const td=todayKey();
