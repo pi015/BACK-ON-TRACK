@@ -226,6 +226,7 @@ body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;d
 .p-high{background:rgba(239,68,68,0.15);color:var(--critical);}
 .p-mid{background:rgba(251,191,36,0.15);color:var(--gold);}
 .p-low{background:rgba(34,197,94,0.15);color:var(--health);}
+.p-rw{background:rgba(168,85,247,0.15);color:var(--purple);}
 .win-item{display:flex;align-items:flex-start;gap:9px;background:rgba(251,191,36,0.05);border:1px solid rgba(251,191,36,0.15);border-radius:8px;padding:11px 13px;margin-bottom:7px;}
 .win-text{flex:1;font-size:13px;line-height:1.5;}
 .win-date{font-size:13px;color:var(--muted);margin-top:3px;}
@@ -557,7 +558,8 @@ body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;d
           </div>
           <div style="display:flex;gap:7px;margin-bottom:13px;flex-wrap:wrap;align-items:center;">
             <span style="font-size:13px;color:var(--muted);letter-spacing:0.5px;">PRIORITY:</span>
-            <button class="task-priority p-high" onclick="setNewPriority('high')" id="pri-high">HIGH</button>
+            <button class="task-priority p-rw" onclick="setNewPriority('rw')" id="pri-rw" style="opacity:0.4">🔄 RW</button>
+            <button class="task-priority p-high" onclick="setNewPriority('high')" id="pri-high" style="opacity:0.4">HIGH</button>
             <button class="task-priority p-mid" onclick="setNewPriority('mid')" id="pri-mid" style="opacity:0.4">MID</button>
             <button class="task-priority p-low" onclick="setNewPriority('low')" id="pri-low" style="opacity:0.4">LOW</button>
           </div>
@@ -1262,7 +1264,7 @@ const QUOTES=[
   {text:"Motivation gets you started. Habit keeps you going.",author:"— Jim Ryun"},
 ];
 
-const APP_VERSION="2.0.2";
+const APP_VERSION="2.1.0";
 const STORAGE_KEY="bot_v4";
 
 function migrateData(data){
@@ -1299,7 +1301,7 @@ let activeBodyKey='';
 let activeJournalKey='';
 let activeMedsKey='';
 let activeMoneyMonth='';
-let newPriority="high";
+let newPriority="rw";
 let newHabitCat="critical";
 
 function save(){
@@ -1842,7 +1844,7 @@ function updateRadar(){
   charts.radar=new Chart(ctx,{type:'radar',data:{labels:HABITS.map(h=>h.icon+' '+h.label.substring(0,9)),datasets:[{data:HABITS.map(h=>td[h.id]?1:0),backgroundColor:'rgba(251,191,36,0.08)',borderColor:'#fbbf24',borderWidth:2,pointBackgroundColor:HABITS.map(h=>CAT[h.cat].color),pointRadius:4}]},options:{responsive:true,maintainAspectRatio:false,scales:{r:{min:0,max:1,ticks:{display:false},grid:{color:'#1e1e35'},angleLines:{color:'#1e1e35'},pointLabels:{color:'#3a3f52',font:{size:8,family:'Space Mono'}}}},plugins:{legend:{display:false}}}});
 }
 
-function setNewPriority(p){newPriority=p;['high','mid','low'].forEach(x=>{document.getElementById('pri-'+x).style.opacity=x===p?'1':'0.4';});}
+function setNewPriority(p){newPriority=p;['rw','high','mid','low'].forEach(x=>{const el=document.getElementById('pri-'+x);if(el)el.style.opacity=x===p?'1':'0.4';});}
 
 function addTask(){
   const input=document.getElementById('task-input');const text=input.value.trim();if(!text)return;
@@ -1874,7 +1876,7 @@ function quickAddTask(){
   const input=document.getElementById('quick-task-input');
   const text=input.value.trim();if(!text)return;
   const today=todayKey();if(!db.tasks)db.tasks={};if(!db.tasks[today])db.tasks[today]=[];
-  db.tasks[today].push({id:Date.now(),text,done:false,priority:'high'});
+  db.tasks[today].push({id:Date.now(),text,done:false,priority:'rw'});
   input.value='';save();
   // Show confirmation flash on today page instead of navigating away
   const fl=document.createElement('div');fl.style.cssText='position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:var(--health);color:#fff;padding:8px 18px;border-radius:20px;font-size:13px;font-family:Space Mono,monospace;z-index:999;';fl.textContent='✓ TASK ADDED';document.body.appendChild(fl);setTimeout(()=>fl.remove(),1800);
@@ -1882,14 +1884,15 @@ function quickAddTask(){
 
 function renderTasks(){
   rolloverTasks();
+  setNewPriority(newPriority);// restore priority button visual state
   document.getElementById('tasks-date').textContent=new Date().toDateString().toUpperCase();
   const today=todayKey();const tasks=(db.tasks&&db.tasks[today])||[];
   const list=document.getElementById('task-list');list.innerHTML='';
-  const sorted=[...tasks].sort((a,b)=>({high:0,mid:1,low:2}[a.priority]-{high:0,mid:1,low:2}[b.priority]));
+  const sorted=[...tasks].sort((a,b)=>({rw:0,high:1,mid:2,low:3}[a.priority]??1)-({rw:0,high:1,mid:2,low:3}[b.priority]??1));
   sorted.forEach(task=>{
     const rollTag=task.rolledFrom?`<span style="font-size:10px;color:var(--purple);background:rgba(168,85,247,0.12);padding:1px 5px;border-radius:3px;margin-left:4px;">↩ CARRIED</span>`:'';
     const div=document.createElement('div');div.className='task-item'+(task.done?' done-task':'');
-    div.innerHTML=`<div class="task-check ${task.done?'checked':''}" onclick="toggleTask('${today}',${task.id})">${task.done?'✓':''}</div><span class="task-text" onclick="toggleTask('${today}',${task.id})">${task.text}${rollTag}</span><span class="task-priority p-${task.priority}">${task.priority.toUpperCase()}</span><button class="task-del" onclick="deleteTask('${today}',${task.id})">✕</button>`;
+    div.innerHTML=`<div class="task-check ${task.done?'checked':''}" onclick="toggleTask('${today}',${task.id})">${task.done?'✓':''}</div><span class="task-text" onclick="toggleTask('${today}',${task.id})">${task.text}${rollTag}</span><span class="task-priority p-${task.priority}">${task.priority==='rw'?'🔄 RW':task.priority.toUpperCase()}</span><button class="task-del" onclick="deleteTask('${today}',${task.id})">✕</button>`;
     list.appendChild(div);
   });
   const done=tasks.filter(t=>t.done).length,pending=tasks.filter(t=>!t.done).length;
