@@ -126,6 +126,55 @@ body.light .pin-btn{background:var(--surface2);color:var(--text);}
   box-sizing:border-box!important;max-width:100%!important;width:100%!important;
 }
 
+
+/* ── PRINT STYLES ── */
+@media print {
+  body{background:#fff!important;color:#000!important;font-size:12px;}
+  .sidebar,.mobile-nav,.mobile-topbar,.topbar button,.pin-overlay,
+  .pin-setup-overlay,.focus-overlay,.version-toast,
+  #report-personal-note,button,.save-btn,.exp-btn,
+  .panel-header .task-priority{display:none!important;}
+  .view{display:block!important;padding:0!important;}
+  .view:not(#view-report){display:none!important;}
+  #view-report{display:block!important;}
+  .main{height:auto!important;overflow:visible!important;}
+  .panel{border:1px solid #ddd!important;background:#fff!important;break-inside:avoid;margin-bottom:12px;}
+  .panel-header{background:#f5f5f5!important;border-bottom:1px solid #ddd!important;}
+  .panel-title{color:#000!important;}
+  .report-month-title{font-size:22px;font-weight:bold;color:#000;}
+  .print-verdict-box{border:2px solid #000!important;background:#f9f9f9!important;}
+  * {-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
+}
+
+/* ── GYM TRACKER ── */
+.gym-type-btn{
+  background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+  padding:8px 10px;font-family:'Space Mono',monospace;font-size:11px;
+  letter-spacing:0.5px;color:var(--muted);cursor:pointer;
+  transition:all 0.15s;-webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;text-align:center;
+}
+.gym-type-btn:hover{border-color:var(--muted);}
+.gym-type-btn.active-type{
+  background:rgba(251,191,36,0.12);border-color:var(--gold);
+  color:var(--gold);font-weight:700;
+}
+.gym-muscle-btn{
+  background:var(--surface2);border:1px solid var(--border);border-radius:6px;
+  padding:4px 9px;font-family:'Space Mono',monospace;font-size:11px;
+  color:var(--muted);cursor:pointer;transition:all 0.15s;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+}
+.gym-muscle-btn.active-muscle{
+  background:rgba(59,130,246,0.15);border-color:#3b82f6;color:#3b82f6;
+}
+.gym-exercise-item{
+  background:var(--surface2);border:1px solid var(--border);border-radius:9px;
+  padding:11px 13px;margin-bottom:7px;
+}
+body.light .gym-type-btn{color:var(--text);}
+body.light .gym-muscle-btn{color:var(--text);}
+
 /* VERSION TOAST */
 .version-toast{position:fixed;bottom:calc(90px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:8px 18px;font-size:13px;letter-spacing:0.5px;color:var(--muted);z-index:999;opacity:0;transition:opacity 0.4s;pointer-events:none;white-space:nowrap;}
 .version-toast.show{opacity:1;}
@@ -545,6 +594,7 @@ body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;d
     <div class="nav-section">HEALTH</div>
     <button class="nav-item" onclick="showView('meds')"><span class="nav-icon">💊</span>MEDS TRACKER</button>
     <button class="nav-item" onclick="showView('body')"><span class="nav-icon">🩺</span>BODY LOG</button>
+    <button class="nav-item" onclick="showView('gym')"><span class="nav-icon">🏋️</span>GYM TRACKER</button>
     <button class="nav-item" onclick="showView('money')"><span class="nav-icon">💰</span>MONEY TRACKER</button>
     <button class="nav-item" onclick="showView('movies')"><span class="nav-icon">🎬</span>MOVIES</button>
     <button class="nav-item" onclick="showView('quotes')"><span class="nav-icon">💭</span>MY QUOTES</button>
@@ -767,8 +817,23 @@ body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;d
 
 <!-- REPORT -->
 <div class="view" id="view-report">
-  <div class="topbar"><div class="page-title">WEEKLY REPORT</div></div>
-  <div class="grid-2" id="report-content"></div>
+  <div class="topbar">
+    <div class="page-title">MONTHLY REPORT</div>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <input type="month" id="report-month-picker" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--text);font-family:'Space Mono',monospace;font-size:12px;outline:none;cursor:pointer;" onchange="renderReport()"/>
+      <button onclick="printMonthlyReport()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 12px;color:var(--text);font-family:'Space Mono',monospace;font-size:12px;cursor:pointer;letter-spacing:0.5px;white-space:nowrap;">🖨 PRINT</button>
+    </div>
+  </div>
+  <!-- Personal note field -->
+  <div class="panel" style="margin-bottom:14px;">
+    <div class="panel-header"><span class="panel-title">PERSONAL NOTE FOR THIS MONTH</span></div>
+    <div class="panel-body">
+      <textarea class="journal-textarea" id="report-personal-note" placeholder="Anything important that happened this month? Travel, illness, major events... Adds context to your verdict." style="min-height:70px;margin-bottom:10px;"></textarea>
+      <button class="save-btn" onclick="saveReportNote()" style="margin-top:0;">SAVE NOTE</button>
+      <span class="saved-flash" id="report-note-saved" style="margin-left:10px;">✓ SAVED</span>
+    </div>
+  </div>
+  <div id="report-content"></div>
 </div>
 
 <!-- SETTINGS -->
@@ -852,45 +917,48 @@ body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;d
 </div>
 
 <!-- MANAGE HABITS -->
-<div class="view" id="view-habits_mgr" style="overflow-x:hidden;max-width:100%;">
+<div class="view" id="view-habits_mgr">
   <div class="topbar"><div class="page-title">MANAGE HABITS</div></div>
-  <div class="grid-2">
-    <div>
-      <div class="panel">
-        <div class="panel-header"><span class="panel-title">ADD NEW HABIT</span></div>
-        <div class="panel-body">
-          <div style="font-size:13px;color:var(--muted);letter-spacing:0.5px;margin-bottom:7px;">HABIT NAME</div>
-          <input class="task-input" id="new-habit-name" placeholder="e.g. Read 10 pages..." style="width:100%;max-width:100%;margin-bottom:10px;" maxlength="40"/>
-          <div style="font-size:13px;color:var(--muted);letter-spacing:0.5px;margin-bottom:7px;">DESCRIPTION (optional)</div>
-          <input class="task-input" id="new-habit-desc" placeholder="Why does this matter..." style="width:100%;max-width:100%;margin-bottom:10px;" maxlength="60"/>
-          <div style="display:flex;gap:12px;margin-bottom:10px;">
-            <div style="flex:1">
-              <div style="font-size:13px;color:var(--muted);letter-spacing:0.5px;margin-bottom:7px;">ICON (emoji)</div>
-              <input class="task-input" id="new-habit-icon" placeholder="🎯" style="width:100%;max-width:100%;font-size:22px;" maxlength="2"/>
-            </div>
-          </div>
-          <div style="font-size:13px;color:var(--muted);letter-spacing:0.5px;margin-bottom:9px;">CATEGORY</div>
-          <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-            <button class="task-priority p-high" id="hcat-critical" onclick="setHabitCat('critical')" style="padding:6px 12px;font-size:14px;">⚡ CRITICAL</button>
-            <button class="task-priority p-low" id="hcat-health" onclick="setHabitCat('health')" style="padding:6px 12px;font-size:14px;opacity:0.4;">💚 HEALTH</button>
-            <button class="task-priority" id="hcat-body" onclick="setHabitCat('body')" style="padding:6px 12px;font-size:14px;opacity:0.4;background:rgba(59,130,246,0.15);color:#3b82f6;">💪 BODY</button>
-          </div>
-          <button class="save-btn" onclick="addCustomHabit()">+ ADD HABIT</button>
-          <span class="saved-flash" id="habit-added-flash" style="margin-left:10px;">✓ ADDED</span>
-          <div style="margin-top:20px;background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.15);border-radius:9px;padding:12px;">
-            <div style="font-size:13px;color:var(--critical);letter-spacing:0.5px;margin-bottom:5px;">⚡ CRITICAL HABITS</div>
-            <div style="font-size:14px;color:var(--muted);line-height:1.7;">These are the non-negotiables. Streak is based on completing ALL critical habits. Mark only your most important habits as critical.</div>
+
+  <!-- ADD FORM — full width, single column, always -->
+  <div class="panel" style="margin-bottom:14px;">
+    <div class="panel-header"><span class="panel-title">ADD NEW HABIT</span></div>
+    <div class="panel-body">
+      <div style="font-size:13px;color:var(--muted);letter-spacing:0.5px;margin-bottom:6px;">HABIT NAME</div>
+      <input class="task-input" id="new-habit-name" placeholder="e.g. Read 10 pages..." maxlength="40" style="display:block;width:100%;margin-bottom:10px;"/>
+      <div style="font-size:13px;color:var(--muted);letter-spacing:0.5px;margin-bottom:6px;">DESCRIPTION (optional)</div>
+      <input class="task-input" id="new-habit-desc" placeholder="Why does this matter..." maxlength="60" style="display:block;width:100%;margin-bottom:10px;"/>
+      <div style="display:flex;gap:10px;margin-bottom:12px;align-items:flex-end;">
+        <div style="width:80px;flex-shrink:0;">
+          <div style="font-size:13px;color:var(--muted);letter-spacing:0.5px;margin-bottom:6px;">ICON</div>
+          <input class="task-input" id="new-habit-icon" placeholder="🎯" maxlength="2" style="width:80px;font-size:22px;text-align:center;padding:8px;"/>
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:13px;color:var(--muted);letter-spacing:0.5px;margin-bottom:6px;">CATEGORY</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="task-priority p-high" id="hcat-critical" onclick="setHabitCat('critical')" style="padding:5px 10px;font-size:12px;white-space:nowrap;">⚡ CRITICAL</button>
+            <button class="task-priority p-low" id="hcat-health" onclick="setHabitCat('health')" style="padding:5px 10px;font-size:12px;opacity:0.4;white-space:nowrap;">💚 HEALTH</button>
+            <button class="task-priority" id="hcat-body" onclick="setHabitCat('body')" style="padding:5px 10px;font-size:12px;opacity:0.4;background:rgba(59,130,246,0.15);color:#3b82f6;white-space:nowrap;">💪 BODY</button>
           </div>
         </div>
       </div>
-    </div>
-    <div>
-      <div class="panel">
-        <div class="panel-header"><span class="panel-title">YOUR HABITS</span></div>
-        <div class="panel-body" id="habits-manager-list"></div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <button class="save-btn" onclick="addCustomHabit()" style="margin-top:0;">+ ADD HABIT</button>
+        <span class="saved-flash" id="habit-added-flash">✓ ADDED</span>
+      </div>
+      <div style="margin-top:14px;background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.15);border-radius:9px;padding:11px;">
+        <div style="font-size:12px;color:var(--critical);letter-spacing:0.5px;margin-bottom:4px;">⚡ CRITICAL HABITS</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.6;">Non-negotiables. Streak is based on ALL critical habits. Mark only your most important ones as critical.</div>
       </div>
     </div>
   </div>
+
+  <!-- HABIT LIST — full width below -->
+  <div class="panel">
+    <div class="panel-header"><span class="panel-title">YOUR HABITS</span></div>
+    <div class="panel-body" id="habits-manager-list"></div>
+  </div>
+
 </div>
 
 <!-- MEDS TRACKER -->
@@ -987,6 +1055,120 @@ body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;d
         <div class="panel-body" id="symptoms-history" style="max-height:220px;overflow-y:auto;"></div>
       </div>
     </div>
+  </div>
+</div>
+
+
+<!-- GYM TRACKER -->
+<div class="view" id="view-gym">
+  <div class="topbar">
+    <div class="page-title">GYM TRACKER</div>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <input type="date" id="gym-date-picker" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--text);font-family:'Space Mono',monospace;font-size:12px;outline:none;cursor:pointer;" onchange="onGymDateChange(this.value)"/>
+      <div class="badge" id="gym-date-badge"></div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <!-- SESSION TYPE -->
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">SESSION TYPE</span></div>
+        <div class="panel-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:12px;" id="gym-session-btns">
+            <button class="gym-type-btn" id="gstype-push" onclick="setGymType('push')">🔴 PUSH</button>
+            <button class="gym-type-btn" id="gstype-pull" onclick="setGymType('pull')">🔵 PULL</button>
+            <button class="gym-type-btn" id="gstype-legs" onclick="setGymType('legs')">🟢 LEGS</button>
+            <button class="gym-type-btn" id="gstype-upper" onclick="setGymType('upper')">🟡 UPPER</button>
+            <button class="gym-type-btn" id="gstype-lower" onclick="setGymType('lower')">🟠 LOWER</button>
+            <button class="gym-type-btn" id="gstype-cardio" onclick="setGymType('cardio')">❤️ CARDIO</button>
+            <button class="gym-type-btn" id="gstype-full" onclick="setGymType('full')">⚡ FULL BODY</button>
+            <button class="gym-type-btn" id="gstype-rest" onclick="setGymType('rest')">😴 REST DAY</button>
+          </div>
+          <!-- Swimming -->
+          <div style="display:flex;align-items:center;justify-content:space-between;background:rgba(59,130,246,0.07);border:1px solid rgba(59,130,246,0.2);border-radius:9px;padding:11px 13px;cursor:pointer;" onclick="toggleSwimming()" id="swim-toggle-row">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:20px;">🏊</span>
+              <div>
+                <div style="font-size:13px;font-weight:700;color:var(--text-strong);">SWIMMING</div>
+                <div style="font-size:11px;color:var(--muted);" id="swim-status-text">Tap to log swimming today</div>
+              </div>
+            </div>
+            <div id="swim-toggle-indicator" style="width:42px;height:24px;border-radius:12px;background:var(--surface3);border:1px solid var(--border);position:relative;transition:background 0.2s;flex-shrink:0;">
+              <div id="swim-toggle-thumb" style="position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:var(--muted);transition:all 0.2s;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SESSION RATING & NOTES -->
+      <div class="panel" id="gym-rating-panel">
+        <div class="panel-header"><span class="panel-title">SESSION RATING</span></div>
+        <div class="panel-body">
+          <div style="font-size:13px;color:var(--muted);letter-spacing:0.5px;margin-bottom:8px;">HOW WAS THE SESSION? (1-10)</div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:14px;" id="gym-rating-btns"></div>
+          <div style="font-size:13px;color:var(--muted);letter-spacing:0.5px;margin-bottom:6px;">STRETCHING DONE</div>
+          <div style="display:flex;gap:8px;margin-bottom:12px;">
+            <button class="gym-type-btn" id="stretch-yes" onclick="setStretching('yes')" style="flex:1;">✅ YES</button>
+            <button class="gym-type-btn" id="stretch-no" onclick="setStretching('no')" style="flex:1;opacity:0.4;">❌ NO</button>
+            <button class="gym-type-btn" id="stretch-partial" onclick="setStretching('partial')" style="flex:1;opacity:0.4;">🔸 PARTIAL</button>
+          </div>
+          <div style="font-size:13px;color:var(--muted);letter-spacing:0.5px;margin-bottom:6px;">SESSION NOTES</div>
+          <textarea class="journal-textarea" id="gym-notes" placeholder="How did it feel? Energy level, pump, anything notable..." style="min-height:70px;margin-bottom:0;"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <!-- EXERCISES -->
+      <div class="panel" id="gym-exercises-panel">
+        <div class="panel-header"><span class="panel-title">EXERCISES LOGGED</span></div>
+        <div class="panel-body">
+          <!-- Add exercise form -->
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:12px;margin-bottom:12px;">
+            <input class="task-input" id="gym-ex-name" placeholder="Exercise name..." style="width:100%;margin-bottom:8px;" maxlength="40"/>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px;">
+              <div>
+                <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">SETS</div>
+                <input class="task-input" id="gym-ex-sets" type="number" placeholder="4" min="1" max="20" style="width:100%;padding:7px 8px;"/>
+              </div>
+              <div>
+                <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">REPS</div>
+                <input class="task-input" id="gym-ex-reps" placeholder="8-12" style="width:100%;padding:7px 8px;" maxlength="10"/>
+              </div>
+              <div>
+                <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">WEIGHT (kg)</div>
+                <input class="task-input" id="gym-ex-weight" type="number" placeholder="60" min="0" max="500" style="width:100%;padding:7px 8px;"/>
+              </div>
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">MUSCLE GROUP</div>
+            <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px;" id="muscle-group-btns">
+              <button class="gym-muscle-btn active-muscle" id="mg-chest" onclick="setMuscle('chest')">Chest</button>
+              <button class="gym-muscle-btn" id="mg-back" onclick="setMuscle('back')">Back</button>
+              <button class="gym-muscle-btn" id="mg-shoulders" onclick="setMuscle('shoulders')">Shoulders</button>
+              <button class="gym-muscle-btn" id="mg-biceps" onclick="setMuscle('biceps')">Biceps</button>
+              <button class="gym-muscle-btn" id="mg-triceps" onclick="setMuscle('triceps')">Triceps</button>
+              <button class="gym-muscle-btn" id="mg-legs" onclick="setMuscle('legs')">Legs</button>
+              <button class="gym-muscle-btn" id="mg-core" onclick="setMuscle('core')">Core</button>
+              <button class="gym-muscle-btn" id="mg-cardio" onclick="setMuscle('cardio')">Cardio</button>
+            </div>
+            <button class="save-btn" onclick="addGymExercise()" style="margin-top:0;width:100%;">+ ADD EXERCISE</button>
+          </div>
+          <div id="gym-exercise-list"></div>
+          <button class="save-btn" onclick="saveGymSession()" style="width:100%;background:var(--health);margin-top:4px;">💾 SAVE SESSION</button>
+          <span class="saved-flash" id="gym-saved" style="margin-left:0;margin-top:8px;display:block;text-align:center;">✓ SESSION SAVED</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS & VERDICT -->
+  <div class="panel" style="margin-top:4px;">
+    <div class="panel-header">
+      <span class="panel-title">GYM STATS & VERDICT</span>
+      <input type="month" id="gym-stats-month" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text);font-family:'Space Mono',monospace;font-size:11px;outline:none;cursor:pointer;" onchange="renderGymStats()"/>
+    </div>
+    <div class="panel-body" id="gym-stats-content"></div>
   </div>
 </div>
 
@@ -1391,7 +1573,7 @@ const QUOTES=[
   {text:"Motivation gets you started. Habit keeps you going.",author:"— Jim Ryun"},
 ];
 
-const APP_VERSION="2.6.0";
+const APP_VERSION="2.8.0";
 const STORAGE_KEY="bot_v4";
 
 function migrateData(data){
@@ -1415,6 +1597,9 @@ function migrateData(data){
   if(!data.myQuotes)data.myQuotes=[];
   if(!data.wishlist)data.wishlist=[];
   if(!data.hiddenTabs)data.hiddenTabs=[];
+  if(!data.reportNotes)data.reportNotes={};
+  if(!data.gymLog)data.gymLog={};
+  if(!data.gymLog)data.gymLog={};
   data._version=APP_VERSION;
   return data;
 }
@@ -1504,7 +1689,7 @@ function showView(v){
   document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
   document.getElementById('view-'+v).classList.add('active');
-  const idx=['today','tasks','journal','wins','learn','goals','hard','meds','body','money','movies','quotes','wishlist','breathe','week','review','graphs','report','habits_mgr','settings'].indexOf(v);
+  const idx=['today','tasks','journal','wins','learn','goals','hard','meds','body','gym','money','movies','quotes','wishlist','breathe','week','review','graphs','report','habits_mgr','settings'].indexOf(v);
   if(idx>=0)document.querySelectorAll('.nav-item')[idx].classList.add('active');
   // Reset date pickers to today on each navigation
   const td=todayKey();
@@ -1512,7 +1697,8 @@ function showView(v){
   if(v==='body'){activeBodyKey=td;const dp=document.getElementById('body-date-picker');if(dp)dp.value=td;}
   if(v==='journal'){activeJournalKey=td;const dp=document.getElementById('journal-date-picker');if(dp)dp.value=td;}
   if(v==='meds'){activeMedsKey=td;const dp=document.getElementById('meds-date-picker');if(dp)dp.value=td;}
-  const renders={tasks:renderTasks,journal:renderJournal,wins:renderWins,learn:renderLearn,goals:renderGoals,hard:renderHard,meds:renderMeds,body:renderBody,money:renderMoney,movies:renderMovies,quotes:renderMyQuotes,wishlist:renderWishlist,breathe:renderBreathe,week:renderWeek,review:renderWeeklyReview,graphs:renderGraphs,report:renderReport,habits_mgr:renderHabitsMgr,settings:renderSettings};
+  if(v==='gym'){activeGymKey=td;const dp=document.getElementById('gym-date-picker');if(dp){dp.value=td;dp.max=td;}}
+  const renders={tasks:renderTasks,journal:renderJournal,wins:renderWins,learn:renderLearn,goals:renderGoals,hard:renderHard,meds:renderMeds,body:renderBody,gym:renderGym,money:renderMoney,movies:renderMovies,quotes:renderMyQuotes,wishlist:renderWishlist,breathe:renderBreathe,week:renderWeek,review:renderWeeklyReview,graphs:renderGraphs,report:renderReport,habits_mgr:renderHabitsMgr,settings:renderSettings};
   if(renders[v])renders[v]();
 }
 
@@ -2127,30 +2313,335 @@ function renderGraphs(){
   charts.streakChart=new Chart(document.getElementById('streak-chart'),{type:'bar',data:{labels:keys30.map(k=>k.slice(5)),datasets:[{data:keys30.map((k,i)=>{let s=0;for(let j=i;j>=0;j--){const dd=(db.habits&&db.habits[keys30[j]])||{};if(HABITS.filter(h=>h.cat==="critical").every(h=>dd[h.id]))s++;else break;}return s;}),backgroundColor:'rgba(251,191,36,0.4)',borderColor:'#fbbf24',borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{min:0,grid:{color:'#1e1e35'},ticks:{color:'#3a3f52',font:{size:9}}},x:{grid:{display:false},ticks:{color:'#3a3f52',font:{size:8},maxTicksLimit:10}}},plugins:{legend:{display:false}}}});
 }
 
+function saveReportNote(){
+  const month=document.getElementById('report-month-picker').value||todayKey().slice(0,7);
+  const note=document.getElementById('report-personal-note').value.trim();
+  if(!db.reportNotes)db.reportNotes={};
+  db.reportNotes[month]=note;
+  save();
+  const fl=document.getElementById('report-note-saved');fl.classList.add('show');setTimeout(()=>fl.classList.remove('show'),2000);
+}
+
+function getMonthKeys(monthStr){
+  // Returns all day keys for a given month e.g. "2026-03"
+  const [y,m]=monthStr.split('-').map(Number);
+  const days=new Date(y,m,0).getDate();
+  const keys=[];
+  for(let d=1;d<=days;d++){
+    keys.push(y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0'));
+  }
+  return keys;
+}
+
+function printMonthlyReport(){
+  window.print();
+}
+
 function renderReport(){
-  const keys=getLast(7);const scores=keys.map(k=>getScore(k));
-  const avg=Math.round(scores.reduce((a,b)=>a+b,0)/7);
-  const perfect=scores.filter(s=>s===100).length;
-  const moods=keys.map(k=>db.mood&&db.mood[k]).filter(Boolean);
-  const avgMood=moods.length?Math.round(moods.reduce((a,b)=>a+b,0)/moods.length):null;
-  const bestDay=keys[scores.indexOf(Math.max(...scores))];
-  const streak=getStreak();
-  const totalWins=(db.wins||[]).filter(w=>keys.includes(w.date)).length;
-  const tasksDone=keys.reduce((a,k)=>a+(db.tasks&&db.tasks[k]||[]).filter(t=>t.done).length,0);
+  // Init month picker
+  const picker=document.getElementById('report-month-picker');
+  if(!picker.value)picker.value=todayKey().slice(0,7);
+  const monthStr=picker.value;
+  const [y,m]=monthStr.split('-').map(Number);
+  const monthName=new Date(y,m-1,1).toLocaleString('default',{month:'long',year:'numeric'}).toUpperCase();
+  const keys=getMonthKeys(monthStr);
+  const daysTracked=keys.filter(k=>Object.keys((db.habits&&db.habits[k])||{}).length>0);
+  const totalDays=keys.length;
+
+  // Load personal note
+  const noteEl=document.getElementById('report-personal-note');
+  if(noteEl)noteEl.value=(db.reportNotes&&db.reportNotes[monthStr])||'';
+
+  // ── HABIT DATA ─────────────────────────────────────────────────────────────
+  const scores=keys.map(k=>getScore(k));
+  const avgScore=daysTracked.length?Math.round(scores.filter(s=>s>0).reduce((a,b)=>a+b,0)/Math.max(daysTracked.length,1)):0;
+  const perfectDays=scores.filter(s=>s===100).length;
+
+  // Week by week breakdown
+  const weeks=[];
+  for(let w=0;w<5;w++){
+    const wKeys=keys.slice(w*7,w*7+7).filter(k=>k);
+    if(!wKeys.length)break;
+    const wScores=wKeys.map(k=>getScore(k));
+    const wAvg=Math.round(wScores.reduce((a,b)=>a+b,0)/wKeys.length);
+    weeks.push({label:'Week '+(w+1),avg:wAvg,keys:wKeys});
+  }
+
+  // Habit performance per habit
+  const habitStats=HABITS.map(h=>{
+    const doneDays=daysTracked.filter(k=>(db.habits[k]||{})[h.id]===true).length;
+    const skipDays=daysTracked.filter(k=>(db.habits[k]||{})[h.id]==='skip').length;
+    const pct=daysTracked.length?Math.round(doneDays/daysTracked.length*100):0;
+    return{h,doneDays,skipDays,pct,total:daysTracked.length};
+  }).sort((a,b)=>b.pct-a.pct);
+
+  const bestHabit=habitStats[0];
+  const worstHabit=habitStats[habitStats.length-1];
+  const criticalHabits=habitStats.filter(hs=>hs.h.cat==='critical');
+  const avgCritical=criticalHabits.length?Math.round(criticalHabits.reduce((a,hs)=>a+hs.pct,0)/criticalHabits.length):0;
+
+  // Day of week analysis
+  const dowNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const dowScores=dowNames.map((_,di)=>{
+    const dayKeys=daysTracked.filter(k=>new Date(k+'T00:00:00').getDay()===di);
+    return{name:dowNames[di],avg:dayKeys.length?Math.round(dayKeys.reduce((a,k)=>a+getScore(k),0)/dayKeys.length):0,count:dayKeys.length};
+  }).filter(d=>d.count>0);
+  const bestDOW=dowScores.length?[...dowScores].sort((a,b)=>b.avg-a.avg)[0]:null;
+  const worstDOW=dowScores.length?[...dowScores].sort((a,b)=>a.avg-b.avg)[0]:null;
+
+  // ── MOOD DATA ──────────────────────────────────────────────────────────────
+  const moodEntries=keys.map(k=>({k,v:db.mood&&db.mood[k]})).filter(e=>e.v);
+  const avgMood=moodEntries.length?parseFloat((moodEntries.reduce((a,e)=>a+e.v,0)/moodEntries.length).toFixed(1)):null;
+  const moodTrend=moodEntries.length>=2?moodEntries[moodEntries.length-1].v-moodEntries[0].v:0;
+
+  // ── SLEEP/BODY CORRELATION ─────────────────────────────────────────────────
+  const sleepDays=keys.filter(k=>db.bodyLog&&db.bodyLog[k]&&db.bodyLog[k].sleepHours);
+  const avgSleep=sleepDays.length?parseFloat((sleepDays.reduce((a,k)=>a+(db.bodyLog[k].sleepHours||0),0)/sleepDays.length).toFixed(1)):null;
+  const goodSleepDays=sleepDays.filter(k=>db.bodyLog[k].sleepHours>=7);
+  const poorSleepDays=sleepDays.filter(k=>db.bodyLog[k].sleepHours<6);
+  const goodSleepAvgScore=goodSleepDays.length?Math.round(goodSleepDays.reduce((a,k)=>a+getScore(k),0)/goodSleepDays.length):null;
+  const poorSleepAvgScore=poorSleepDays.length?Math.round(poorSleepDays.reduce((a,k)=>a+getScore(k),0)/poorSleepDays.length):null;
+  const weightEntries=keys.filter(k=>db.bodyLog&&db.bodyLog[k]&&db.bodyLog[k].weight);
+  const avgWeight=weightEntries.length?parseFloat((weightEntries.reduce((a,k)=>a+(db.bodyLog[k].weight||0),0)/weightEntries.length).toFixed(1)):null;
+  const symptomDays=keys.filter(k=>db.bodyLog&&db.bodyLog[k]&&db.bodyLog[k].symptoms).length;
+
+  // ── MEDS ───────────────────────────────────────────────────────────────────
+  const meds=getMeds();
+  const medsAdherence=daysTracked.length&&meds.length?Math.round(daysTracked.reduce((a,k)=>{
+    const log=(db.medsLog&&db.medsLog[k])||{};
+    return a+(meds.filter(med=>log[med.id]).length/meds.length);
+  },0)/daysTracked.length*100):null;
+
+  // ── MONEY ──────────────────────────────────────────────────────────────────
+  const monthExpenses=(db.expenses||[]).filter(e=>e.date.startsWith(monthStr));
+  const totalSpent=monthExpenses.reduce((a,e)=>a+e.amount,0);
+  const byCategory={};
+  monthExpenses.forEach(e=>{if(!byCategory[e.cat])byCategory[e.cat]=0;byCategory[e.cat]+=e.amount;});
+  const topCategory=Object.keys(byCategory).sort((a,b)=>byCategory[b]-byCategory[a])[0];
+
+  // ── TASKS & JOURNAL ────────────────────────────────────────────────────────
+  const allTasks=keys.reduce((a,k)=>a.concat((db.tasks&&db.tasks[k])||[]),[]);
+  const tasksDone=allTasks.filter(t=>t.done).length;
+  const rwDone=allTasks.filter(t=>t.priority==='rw'&&t.done).length;
   const journalDays=keys.filter(k=>db.journal&&db.journal[k]).length;
-  const bestHabit=HABITS.map(h=>({h,c:keys.filter(k=>(db.habits&&db.habits[k]||{})[h.id]).length})).sort((a,b)=>b.c-a.c)[0];
-  const worstHabit=HABITS.map(h=>({h,c:keys.filter(k=>(db.habits&&db.habits[k]||{})[h.id]).length})).sort((a,b)=>a.c-b.c)[0];
-  const verdict=avg>=85?"You're actually doing it. This is what consistency looks like. Keep the momentum going.":avg>=60?"Decent week. But decent isn't your goal. You know which habits you're skipping. Show up fully.":avg>=30?"You're inconsistent and you know it. One full day. Then another. Come back.":"Bro. You're barely showing up. Start with ONE habit tonight. Just one. I believe in you.";
+  const winCount=(db.wins||[]).filter(w=>w.date&&w.date.startsWith(monthStr)).length;
+
+  // ── VERDICT ENGINE ────────────────────────────────────────────────────────
+  function buildVerdict(){
+    const lines=[];
+    const personalNote=(db.reportNotes&&db.reportNotes[monthStr])||'';
+
+    // Opening — overall performance
+    if(avgScore>=85)lines.push('Exceptional month. You showed up with real consistency — '+avgScore+'% average daily score is the kind of number that compounds into long-term change.');
+    else if(avgScore>=70)lines.push('Solid month overall. '+avgScore+'% average puts you above the line — you are building momentum, even if it did not feel that way every day.');
+    else if(avgScore>=50)lines.push('Mixed month. '+avgScore+'% average means you showed up but not fully. The gap between what you did and what you are capable of is real and you know it.');
+    else if(avgScore>=30)lines.push('Tough month. '+avgScore+'% average. The tracking data does not lie — consistency was a struggle. What matters now is what you do next.');
+    else if(daysTracked.length===0)lines.push('No data tracked this month. The first step is showing up — start logging tomorrow.');
+    else lines.push('Difficult month — '+avgScore+'% average. But you opened this report, which means something in you still cares. Use that.');
+
+    // Week trend
+    if(weeks.length>=2){
+      const wTrend=weeks[weeks.length-1].avg-weeks[0].avg;
+      if(wTrend>15)lines.push('Strong upward trend across the weeks ('+weeks.map(w=>w.avg+'%').join(' → ')+') — you finished stronger than you started. That is the right direction.');
+      else if(wTrend<-15)lines.push('Declining trend across the weeks ('+weeks.map(w=>w.avg+'%').join(' → ')+') — you started well but lost momentum. Find out why and protect against it next month.');
+      else lines.push('Relatively consistent week to week ('+weeks.map(w=>w.avg+'%').join(' → ')+').');
+    }
+
+    // Critical habits
+    if(criticalHabits.length){
+      if(avgCritical>=80)lines.push('Your critical habits held strong at '+avgCritical+'% adherence — these are your non-negotiables and you treated them that way.');
+      else if(avgCritical>=50)lines.push('Critical habit adherence was '+avgCritical+'%. These are your non-negotiables — they need to be closer to 100%. Identify which ones slipped and why.');
+      else lines.push('Critical habits were only at '+avgCritical+'% this month. This is the area that needs the most attention. Everything else depends on these.');
+    }
+
+    // Best and worst habit
+    if(bestHabit&&bestHabit.pct>0)lines.push(bestHabit.h.icon+' '+bestHabit.h.label+' was your strongest habit at '+bestHabit.pct+'% — anchor more of your day around this consistency.');
+    if(worstHabit&&worstHabit.pct<50&&HABITS.length>1)lines.push(worstHabit.h.icon+' '+worstHabit.h.label+' needs work — only '+worstHabit.pct+'% this month. One focused week on this single habit would change the number significantly.');
+
+    // Day of week pattern
+    if(bestDOW&&worstDOW&&bestDOW.name!==worstDOW.name){
+      lines.push('Pattern insight: '+bestDOW.name+'s are your strongest day ('+bestDOW.avg+'% avg). '+worstDOW.name+'s are where you consistently slip ('+worstDOW.avg+'% avg) — plan your easiest week on '+worstDOW.name+'s and protect your energy for that day.');
+    }
+
+    // Sleep correlation — the most valuable insight
+    if(goodSleepAvgScore!==null&&poorSleepAvgScore!==null&&goodSleepDays.length>0&&poorSleepDays.length>0){
+      lines.push('Sleep correlation: on nights you slept 7+ hours your habit score averaged '+goodSleepAvgScore+'%. On nights under 6 hours it dropped to '+poorSleepAvgScore+'%. Sleep is not recovery — it is performance.');
+    } else if(avgSleep){
+      lines.push('Average sleep this month: '+avgSleep+' hours.'+(avgSleep<7?' Getting to 7+ hours consistently would likely be your single highest-leverage improvement.':' Good sleep baseline.'));
+    }
+
+    // Mood
+    if(avgMood){
+      const moodLabel=avgMood>=8?'excellent':avgMood>=6?'good':avgMood>=4?'okay':'low';
+      lines.push('Average mood: '+avgMood+'/10 ('+moodLabel+').'+
+        (moodTrend>1?' Trending upward through the month — a positive sign.':
+         moodTrend<-1?' Mood declined through the month — worth reflecting on what shifted.':
+         ' Relatively stable throughout.'));
+    }
+
+    // Meds
+    if(medsAdherence!==null){
+      if(medsAdherence>=90)lines.push('Medication adherence: '+medsAdherence+'% — excellent. This is foundational and you are treating it that way.');
+      else if(medsAdherence>=70)lines.push('Medication adherence: '+medsAdherence+'% — room to improve. Missed doses have downstream effects on everything else you are tracking.');
+      else lines.push('Medication adherence was only '+medsAdherence+'% this month. This needs to become non-negotiable.');
+    }
+
+    // Money
+    if(totalSpent>0){
+      lines.push('Total spent this month: ₹'+totalSpent.toLocaleString('en-IN')+(topCategory?' — highest category: '+topCategory+'.':'.'));
+    }
+
+    // Journal consistency
+    if(journalDays>0){
+      const jpct=Math.round(journalDays/totalDays*100);
+      if(jpct>=70)lines.push('Journal consistency was strong at '+journalDays+' out of '+totalDays+' days. Writing creates clarity — keep this habit.');
+      else lines.push('Journaled '+journalDays+' out of '+totalDays+' days. Even two lines a day builds self-awareness over time.');
+    }
+
+    // Personal note context
+    if(personalNote)lines.push('Personal context this month: "'+personalNote+'" — factor this into how you read these numbers.');
+
+    // Closing
+    if(avgScore>=70)lines.push('Next month: maintain what is working, fix the one habit that is dragging your score. Do not change everything at once.');
+    else lines.push('Next month: pick two habits and make them automatic before adding anything else. Simplify. Show up.');
+
+    return lines;
+  }
+
+  const verdictLines=buildVerdict();
+
+  // ── BUILD HTML ─────────────────────────────────────────────────────────────
   const st=(label,val,color)=>`<div class="report-stat"><span class="report-stat-label">${label}</span><span class="report-stat-val" style="color:${color}">${val}</span></div>`;
+  const scoreColor=s=>s>=70?'#22c55e':s>=50?'#fbbf24':'#ef4444';
+
+  // Week bars
+  const weekBars=weeks.map(w=>`
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;">
+      <span style="font-size:12px;color:var(--muted);width:50px;flex-shrink:0;">${w.label}</span>
+      <div style="flex:1;background:var(--surface2);border-radius:4px;height:8px;overflow:hidden;">
+        <div style="height:100%;width:${w.avg}%;background:${scoreColor(w.avg)};border-radius:4px;transition:width 0.5s;"></div>
+      </div>
+      <span style="font-size:12px;color:${scoreColor(w.avg)};width:35px;text-align:right;">${w.avg}%</span>
+    </div>`).join('');
+
+  // Habit bars
+  const habitBars=habitStats.map(hs=>`
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;">
+      <span style="font-size:13px;width:20px;flex-shrink:0;">${hs.h.icon}</span>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${hs.h.label}</div>
+        <div style="background:var(--surface2);border-radius:3px;height:6px;overflow:hidden;">
+          <div style="height:100%;width:${hs.pct}%;background:${CAT[hs.h.cat].color};border-radius:3px;"></div>
+        </div>
+      </div>
+      <span style="font-size:12px;color:var(--muted);width:35px;text-align:right;flex-shrink:0;">${hs.pct}%</span>
+    </div>`).join('');
+
   document.getElementById('report-content').innerHTML=`
-    <div>
-      <div class="report-card"><div class="report-card-title">WEEKLY PERFORMANCE</div>${st('Avg Daily Score',avg+'%',avg>=70?'#22c55e':avg>=50?'#fbbf24':'#ef4444')}${st('Perfect Days',perfect+'/7',perfect>=5?'#22c55e':perfect>=3?'#fbbf24':'#ef4444')}${st('Current Streak',streak+' days','#fbbf24')}${st('Best Day',bestDay||'—','#3b82f6')}</div>
-      <div class="report-card"><div class="report-card-title">MOOD & WELLBEING</div>${st('Avg Mood',avgMood?avgMood+'/10 '+MOOD_MAP[avgMood]:'No data',avgMood>=7?'#22c55e':avgMood>=5?'#fbbf24':'#ef4444')}${st('Journal Entries',journalDays+'/7 days','#a855f7')}${st('Wins Logged',totalWins,'#fbbf24')}</div>
+    <!-- HEADER -->
+    <div class="panel" style="background:linear-gradient(135deg,var(--surface),var(--surface2));margin-bottom:14px;">
+      <div class="panel-body" style="text-align:center;padding:20px;">
+        <div class="report-month-title" style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--gold);letter-spacing:1px;">${monthName}</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:60px;color:${scoreColor(avgScore)};line-height:1;">${avgScore}%</div>
+        <div style="font-size:13px;color:var(--muted);letter-spacing:0.5px;margin-top:4px;">MONTHLY AVERAGE SCORE</div>
+        <div style="display:flex;justify-content:center;gap:24px;margin-top:16px;flex-wrap:wrap;">
+          <div style="text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--gold);">${daysTracked.length}</div><div style="font-size:11px;color:var(--muted);">DAYS TRACKED</div></div>
+          <div style="text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:#22c55e;">${perfectDays}</div><div style="font-size:11px;color:var(--muted);">PERFECT DAYS</div></div>
+          <div style="text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--purple);">${journalDays}</div><div style="font-size:11px;color:var(--muted);">JOURNAL DAYS</div></div>
+          <div style="text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--bodyc);">${winCount}</div><div style="font-size:11px;color:var(--muted);">WINS LOGGED</div></div>
+        </div>
+      </div>
     </div>
-    <div>
-      <div class="report-card"><div class="report-card-title">HABIT HIGHLIGHTS</div>${st('Best Habit',bestHabit?bestHabit.h.icon+' '+bestHabit.h.label:'—','#22c55e')}${st('Needs Work',worstHabit?worstHabit.h.icon+' '+worstHabit.h.label:'—','#ef4444')}${st('Tasks Completed',tasksDone,'#3b82f6')}</div>
-      <div class="report-card"><div class="report-card-title">MENTOR'S VERDICT</div><div style="padding:13px 0;font-size:13px;line-height:1.9;color:var(--muted2);font-style:italic;">${verdict}</div></div>
-    </div>`;
+
+    <div class="grid-2">
+      <div>
+        <!-- WEEK BY WEEK -->
+        <div class="panel">
+          <div class="panel-header"><span class="panel-title">WEEK BY WEEK</span></div>
+          <div class="panel-body">${weekBars||'<div style="color:var(--muted);font-size:13px;">No data this month.</div>'}</div>
+        </div>
+
+        <!-- HABIT PERFORMANCE -->
+        <div class="panel">
+          <div class="panel-header"><span class="panel-title">HABIT PERFORMANCE</span></div>
+          <div class="panel-body">${habitBars||'<div style="color:var(--muted);font-size:13px;">No habits tracked.</div>'}</div>
+        </div>
+
+        <!-- DAY OF WEEK PATTERN -->
+        <div class="panel">
+          <div class="panel-header"><span class="panel-title">DAY OF WEEK PATTERN</span></div>
+          <div class="panel-body">
+            ${dowScores.length?dowScores.map(d=>`
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                <span style="font-size:12px;color:var(--muted);width:32px;">${d.name}</span>
+                <div style="flex:1;background:var(--surface2);border-radius:3px;height:8px;overflow:hidden;">
+                  <div style="height:100%;width:${d.avg}%;background:${scoreColor(d.avg)};border-radius:3px;"></div>
+                </div>
+                <span style="font-size:12px;color:${scoreColor(d.avg)};width:35px;text-align:right;">${d.avg}%</span>
+              </div>`).join(''):'<div style="color:var(--muted);font-size:13px;">Not enough data.</div>'}
+            ${bestDOW&&worstDOW&&bestDOW.name!==worstDOW.name?`
+              <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;">
+                <span style="font-size:12px;background:rgba(34,197,94,0.1);color:#22c55e;padding:3px 8px;border-radius:4px;">💪 BEST: ${bestDOW.name}</span>
+                <span style="font-size:12px;background:rgba(239,68,68,0.1);color:#ef4444;padding:3px 8px;border-radius:4px;">⚠️ WEAKEST: ${worstDOW.name}</span>
+              </div>`:''}
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <!-- MOOD & BODY -->
+        <div class="panel">
+          <div class="panel-header"><span class="panel-title">MOOD & BODY</span></div>
+          <div class="panel-body">
+            ${st('Avg Mood',avgMood?avgMood+'/10 '+(avgMood>=8?'😄':avgMood>=6?'🙂':avgMood>=4?'😐':'😔'):'No data',avgMood>=7?'#22c55e':avgMood>=5?'#fbbf24':'#ef4444')}
+            ${avgMood?st('Mood Trend',moodTrend>1?'↑ Improving':moodTrend<-1?'↓ Declining':'→ Stable',moodTrend>1?'#22c55e':moodTrend<-1?'#ef4444':'#fbbf24'):''}
+            ${st('Avg Sleep',avgSleep?avgSleep+'h':'No data',avgSleep>=7?'#22c55e':avgSleep>=6?'#fbbf24':'#ef4444')}
+            ${avgWeight?st('Avg Weight',avgWeight+' kg','#3b82f6'):''}
+            ${symptomDays?st('Symptom Days',symptomDays+' days','#f59e0b'):''}
+            ${goodSleepAvgScore&&poorSleepAvgScore?`<div style="margin-top:10px;padding:10px;background:rgba(59,130,246,0.07);border-radius:8px;border:1px solid rgba(59,130,246,0.2);">
+              <div style="font-size:12px;color:var(--bodyc);letter-spacing:0.5px;margin-bottom:6px;">SLEEP CORRELATION</div>
+              <div style="font-size:13px;color:var(--muted);">7h+ sleep → <span style="color:#22c55e;font-weight:700;">${goodSleepAvgScore}%</span> avg score</div>
+              <div style="font-size:13px;color:var(--muted);">&lt;6h sleep → <span style="color:#ef4444;font-weight:700;">${poorSleepAvgScore}%</span> avg score</div>
+            </div>`:''}
+          </div>
+        </div>
+
+        <!-- MEDS & MONEY -->
+        <div class="panel">
+          <div class="panel-header"><span class="panel-title">MEDS & MONEY</span></div>
+          <div class="panel-body">
+            ${medsAdherence!==null?st('Meds Adherence',medsAdherence+'%',medsAdherence>=90?'#22c55e':medsAdherence>=70?'#fbbf24':'#ef4444'):'<div style="font-size:13px;color:var(--muted);">No meds data.</div>'}
+            ${totalSpent?st('Total Spent','₹'+totalSpent.toLocaleString('en-IN'),'#fbbf24'):''}
+            ${topCategory?st('Top Category',topCategory.toUpperCase(),'#f59e0b'):''}
+            ${st('Tasks Done',tasksDone,'#3b82f6')}
+            ${rwDone?st('Routine Done',rwDone,'#a855f7'):''}
+          </div>
+        </div>
+
+        <!-- STREAKS & WINS -->
+        <div class="panel">
+          <div class="panel-header"><span class="panel-title">STREAKS & WINS</span></div>
+          <div class="panel-body">
+            ${st('Current Streak',getStreak()+' days 🔥','#fbbf24')}
+            ${st('Best Ever',(db.bestStreak||0)+' days','#fbbf24')}
+            ${st('Perfect Days',perfectDays+'/'+totalDays,'#22c55e')}
+            ${st('Wins Logged',winCount,'#fbbf24')}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VERDICT — full width -->
+    <div class="panel print-verdict-box" style="margin-top:14px;border:1px solid rgba(251,191,36,0.3);background:rgba(251,191,36,0.03);">
+      <div class="panel-header" style="background:rgba(251,191,36,0.08);">
+        <span class="panel-title" style="color:var(--gold);">⚡ THE VERDICT — ${monthName}</span>
+      </div>
+      <div class="panel-body">
+        ${verdictLines.map((line,i)=>`<p style="font-size:13px;color:var(--muted2);line-height:1.9;margin-bottom:${i<verdictLines.length-1?'12':'0'}px;${i===0?'font-size:14px;font-weight:700;color:var(--text);':''}${i===verdictLines.length-1?'color:var(--gold);font-style:italic;':''}">${line}</p>`).join('')}
+        ${(db.reportNotes&&db.reportNotes[monthStr])?`<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);font-size:12px;color:var(--muted);font-style:italic;">Personal note: "${db.reportNotes[monthStr]}"</div>`:''}
+      </div>
+    </div>
+  `;
 }
 
 function saveRetestDate(){
@@ -2759,6 +3250,7 @@ const ALL_TOGGLEABLE_TABS=[
   {id:'hard',icon:'🔥',label:'HARD THINGS'},
   {id:'meds',icon:'💊',label:'MEDS'},
   {id:'body',icon:'🩺',label:'BODY LOG'},
+  {id:'gym',icon:'🏋️',label:'GYM TRACKER'},
   {id:'money',icon:'💰',label:'MONEY'},
   {id:'movies',icon:'🎬',label:'MOVIES'},
   {id:'quotes',icon:'💭',label:'MY QUOTES'},
@@ -3227,6 +3719,238 @@ async function gdriveRestore(){
   }
 }
 
+
+
+// ─── GYM CONSTANTS ───────────────────────────────────────────────────────────
+const GYM_TYPES={
+  push:{label:'PUSH',color:'#ef4444',muscles:['chest','shoulders','triceps']},
+  pull:{label:'PULL',color:'#3b82f6',muscles:['back','biceps']},
+  legs:{label:'LEGS',color:'#22c55e',muscles:['legs','core']},
+  upper:{label:'UPPER',color:'#fbbf24',muscles:['chest','back','shoulders','biceps','triceps']},
+  lower:{label:'LOWER',color:'#f97316',muscles:['legs','core']},
+  cardio:{label:'CARDIO',color:'#ec4899',muscles:['cardio']},
+  full:{label:'FULL BODY',color:'#a855f7',muscles:['chest','back','legs','shoulders','core']},
+  rest:{label:'REST DAY',color:'#64748b',muscles:[]},
+};
+const MUSCLES=['chest','back','shoulders','biceps','triceps','legs','core','cardio'];
+
+// ─── GYM TRACKER ─────────────────────────────────────────────────────────────
+let activeGymKey='';
+let currentGymType=null;
+let currentMuscle='chest';
+let currentStretching=null;
+let currentGymRating=null;
+let pendingExercises=[];
+
+function onGymDateChange(val){
+  if(!val)return;
+  activeGymKey=val;
+  renderGym();
+}
+
+function setGymType(type){
+  currentGymType=type;
+  // Clear all type buttons
+  ['push','pull','legs','upper','lower','cardio','full','rest'].forEach(t=>{
+    const b=document.getElementById('gstype-'+t);
+    if(b)b.classList.remove('active-type');
+  });
+  const btn=document.getElementById('gstype-'+type);
+  if(btn)btn.classList.add('active-type');
+  if(GYM_TYPES[type]&&GYM_TYPES[type].muscles.length)setMuscle(GYM_TYPES[type].muscles[0]);
+}
+
+function setMuscle(m){
+  currentMuscle=m;
+  document.querySelectorAll('.gym-muscle-btn').forEach(b=>b.classList.remove('active-muscle'));
+  const btn=document.getElementById('mg-'+m);
+  if(btn)btn.classList.add('active-muscle');
+}
+
+function setStretching(v){
+  currentStretching=v;
+  ['yes','no','partial'].forEach(x=>{
+    const btn=document.getElementById('stretch-'+x);
+    if(btn)btn.style.opacity=x===v?'1':'0.4';
+  });
+}
+
+function toggleSwimming(){
+  const k=activeGymKey||todayKey();
+  if(!db.gymLog)db.gymLog={};
+  if(!db.gymLog[k])db.gymLog[k]={};
+  db.gymLog[k].swimming=!db.gymLog[k].swimming;
+  save();
+  updateSwimUI(!!db.gymLog[k].swimming);
+}
+
+function updateSwimUI(on){
+  const ind=document.getElementById('swim-toggle-indicator');
+  const thumb=document.getElementById('swim-toggle-thumb');
+  const txt=document.getElementById('swim-status-text');
+  if(ind)ind.style.background=on?'#3b82f6':'var(--surface3)';
+  if(thumb)thumb.style.cssText='position:absolute;top:2px;'+(on?'right:2px':'left:2px')+';width:18px;height:18px;border-radius:50%;background:'+(on?'#fff':'var(--muted)')+';transition:all 0.2s;';
+  if(txt)txt.textContent=on?'🏊 Swimming logged':'Tap to log swimming today';
+}
+
+function addGymExercise(){
+  const name=document.getElementById('gym-ex-name').value.trim();
+  if(!name)return;
+  const sets=document.getElementById('gym-ex-sets').value||'';
+  const reps=document.getElementById('gym-ex-reps').value||'';
+  const weight=document.getElementById('gym-ex-weight').value||'';
+  pendingExercises.push({id:Date.now(),name,sets,reps,weight,muscle:currentMuscle});
+  document.getElementById('gym-ex-name').value='';
+  document.getElementById('gym-ex-sets').value='';
+  document.getElementById('gym-ex-reps').value='';
+  document.getElementById('gym-ex-weight').value='';
+  renderExerciseList();
+}
+
+function deleteGymExercise(id){
+  pendingExercises=pendingExercises.filter(e=>e.id!==id);
+  renderExerciseList();
+}
+
+function renderExerciseList(){
+  const list=document.getElementById('gym-exercise-list');
+  if(!list)return;
+  list.innerHTML='';
+  if(!pendingExercises.length){
+    list.innerHTML='<div style="font-size:13px;color:var(--muted);text-align:center;padding:10px 0;">No exercises yet.</div>';
+    return;
+  }
+  pendingExercises.forEach(ex=>{
+    const div=document.createElement('div');
+    div.className='gym-exercise-item';
+    div.innerHTML=`<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;"><div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:700;color:var(--text-strong);margin-bottom:4px;">${ex.name}</div><div style="display:flex;gap:6px;flex-wrap:wrap;">${ex.sets?`<span style="font-size:11px;background:rgba(251,191,36,0.1);color:var(--gold);padding:2px 6px;border-radius:4px;">${ex.sets} sets</span>`:''} ${ex.reps?`<span style="font-size:11px;background:rgba(34,197,94,0.1);color:#22c55e;padding:2px 6px;border-radius:4px;">${ex.reps} reps</span>`:''} ${ex.weight?`<span style="font-size:11px;background:rgba(59,130,246,0.1);color:#3b82f6;padding:2px 6px;border-radius:4px;">${ex.weight}kg</span>`:''} <span style="font-size:11px;background:var(--surface2);color:var(--muted);padding:2px 6px;border-radius:4px;">${ex.muscle}</span></div></div><button onclick="deleteGymExercise(${ex.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;flex-shrink:0;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='var(--muted)'">✕</button></div>`;
+    list.appendChild(div);
+  });
+}
+
+function saveGymSession(){
+  const k=activeGymKey||todayKey();
+  if(!db.gymLog)db.gymLog={};
+  if(!db.gymLog[k])db.gymLog[k]={};
+  const log=db.gymLog[k];
+  log.type=currentGymType;
+  log.exercises=[...pendingExercises];
+  log.rating=currentGymRating;
+  log.stretching=currentStretching;
+  log.notes=document.getElementById('gym-notes').value.trim();
+  log.savedAt=Date.now();
+  save();
+  const fl=document.getElementById('gym-saved');
+  fl.classList.add('show');setTimeout(()=>fl.classList.remove('show'),2000);
+  renderGymStats();
+}
+
+function renderGym(){
+  const k=activeGymKey||todayKey();
+  const isToday=k===todayKey();
+  const badge=document.getElementById('gym-date-badge');
+  if(badge)badge.textContent=new Date(k+'T00:00:00').toDateString().toUpperCase()+(isToday?'':' ✏️');
+  const dp=document.getElementById('gym-date-picker');
+  if(dp)dp.max=todayKey();
+  const log=(db.gymLog&&db.gymLog[k])||{};
+  currentGymType=log.type||null;
+  currentGymRating=log.rating||null;
+  currentStretching=log.stretching||null;
+  pendingExercises=log.exercises?[...log.exercises]:[];
+  // Restore type
+  ['push','pull','legs','upper','lower','cardio','full','rest'].forEach(t=>{
+    const b=document.getElementById('gstype-'+t);
+    if(b)b.classList.toggle('active-type',t===currentGymType);
+  });
+  // Restore stretching
+  ['yes','no','partial'].forEach(x=>{
+    const b=document.getElementById('stretch-'+x);
+    if(b)b.style.opacity=currentStretching===x?'1':'0.4';
+  });
+  // Notes
+  const notesEl=document.getElementById('gym-notes');
+  if(notesEl)notesEl.value=log.notes||'';
+  updateSwimUI(!!log.swimming);
+  // Rating
+  const rb=document.getElementById('gym-rating-btns');
+  if(rb){
+    rb.innerHTML='';
+    for(let i=1;i<=10;i++){
+      const btn=document.createElement('button');
+      btn.className='mood-btn'+(currentGymRating===i?' selected':'');
+      const rc=i<=3?'#ef4444':i<=6?'#fbbf24':'#22c55e';
+      if(currentGymRating===i)btn.style.background=rc;
+      btn.textContent=i;
+      btn.onclick=(()=>{const n=i;return()=>{currentGymRating=n;renderGym();};})();
+      rb.appendChild(btn);
+    }
+  }
+  renderExerciseList();
+  renderGymStats();
+}
+
+function renderGymStats(){
+  const monthEl=document.getElementById('gym-stats-month');
+  const monthStr=monthEl?monthEl.value:todayKey().slice(0,7);
+  const el=document.getElementById('gym-stats-content');
+  if(!el)return;
+  const allLogs=db.gymLog||{};
+  const allKeys=Object.keys(allLogs);
+  const monthKeys=allKeys.filter(k=>k.startsWith(monthStr));
+  const totalSessions=allKeys.filter(k=>allLogs[k].type&&allLogs[k].type!=='rest').length;
+  const swimDays=allKeys.filter(k=>allLogs[k].swimming).length;
+  const monthSessions=monthKeys.filter(k=>allLogs[k].type&&allLogs[k].type!=='rest').length;
+  const monthSwim=monthKeys.filter(k=>allLogs[k].swimming).length;
+  const monthRatings=monthKeys.map(k=>allLogs[k].rating).filter(Boolean);
+  const avgRating=monthRatings.length?(monthRatings.reduce((a,b)=>a+b,0)/monthRatings.length).toFixed(1):null;
+  const stretchDays=monthKeys.filter(k=>allLogs[k].stretching==='yes'||allLogs[k].stretching==='partial').length;
+  // Type counts
+  const typeCounts={};
+  Object.keys(GYM_TYPES).forEach(t=>{typeCounts[t]=0;});
+  allKeys.forEach(k=>{const t=allLogs[k].type;if(t)typeCounts[t]=(typeCounts[t]||0)+1;});
+  // Muscle counts
+  const muscleCounts={};
+  MUSCLES.forEach(m=>{muscleCounts[m]=0;});
+  allKeys.forEach(k=>{
+    (allLogs[k].exercises||[]).forEach(ex=>{if(ex.muscle)muscleCounts[ex.muscle]=(muscleCounts[ex.muscle]||0)+1;});
+    const t=allLogs[k].type;
+    if(t&&GYM_TYPES[t])GYM_TYPES[t].muscles.forEach(m=>{muscleCounts[m]=(muscleCounts[m]||0)+0.5;});
+  });
+  const sortedMuscles=MUSCLES.map(m=>({m,c:Math.round(muscleCounts[m])})).sort((a,b)=>b.c-a.c);
+  const maxMuscle=Math.max(...sortedMuscles.map(x=>x.c),1);
+  const leastTrained=sortedMuscles.filter(x=>x.c<maxMuscle*0.4&&x.m!=='cardio').map(x=>x.m);
+  // Verdict
+  const vLines=[];
+  if(!totalSessions){vLines.push('No sessions logged yet. Log your first session above.');}
+  else{
+    vLines.push(monthSessions+' session'+(monthSessions!==1?'s':'')+' this month'+(avgRating?' — avg rating '+avgRating+'/10.':'.'));
+    if(monthSwim)vLines.push('🏊 Swam on '+monthSwim+' day'+(monthSwim!==1?'s':'')+' this month. Total swim days ever: '+swimDays+'.');
+    const topType=Object.entries(typeCounts).filter(([t])=>t!=='rest').sort((a,b)=>b[1]-a[1])[0];
+    if(topType&&topType[1]>0)vLines.push('Most trained: '+GYM_TYPES[topType[0]].label+' ('+topType[1]+' sessions).');
+    if(leastTrained.length)vLines.push('Undertrained muscles: '+leastTrained.join(', ')+' — add these to your next sessions.');
+    const spct=monthSessions?Math.round(stretchDays/monthSessions*100):0;
+    if(monthSessions)vLines.push('Stretched on '+spct+'% of sessions'+(spct>=80?' — excellent recovery habit.':spct>=50?' — try to make it every session.':' — consistency here prevents injury.'));
+    vLines.push('Total sessions logged ever: '+totalSessions+'. Keep building the history.');
+  }
+  el.innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+      ${[['SESSIONS THIS MONTH',monthSessions,'var(--gold)'],['🏊 SWIM THIS MONTH',monthSwim,'#3b82f6'],['SESSIONS ALL TIME',totalSessions,'#22c55e'],['SWIM DAYS ALL TIME',swimDays,'#a855f7']].map(([l,v,col])=>`<div style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:11px;text-align:center;"><div style="font-family:'Bebas Neue',sans-serif;font-size:26px;color:${col};">${v}</div><div style="font-size:11px;color:var(--muted);letter-spacing:0.5px;">${l}</div></div>`).join('')}
+    </div>
+    <div style="margin-bottom:12px;">
+      <div style="font-size:12px;color:var(--muted);letter-spacing:0.5px;margin-bottom:7px;">SESSION TYPE BREAKDOWN (ALL TIME)</div>
+      ${Object.entries(typeCounts).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).map(([t,n])=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;"><span style="font-size:11px;color:var(--muted);width:72px;flex-shrink:0;">${GYM_TYPES[t].label}</span><div style="flex:1;background:var(--surface2);border-radius:3px;height:6px;overflow:hidden;"><div style="height:100%;width:${Math.round(n/Math.max(...Object.values(typeCounts),1)*100)}%;background:${GYM_TYPES[t].color};border-radius:3px;"></div></div><span style="font-size:11px;color:var(--muted);width:18px;text-align:right;">${n}</span></div>`).join('')}
+    </div>
+    <div style="margin-bottom:14px;">
+      <div style="font-size:12px;color:var(--muted);letter-spacing:0.5px;margin-bottom:7px;">MUSCLE FREQUENCY (ALL TIME)</div>
+      ${sortedMuscles.map(({m,c})=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;"><span style="font-size:11px;color:var(--muted);width:72px;flex-shrink:0;text-transform:capitalize;">${m}</span><div style="flex:1;background:var(--surface2);border-radius:3px;height:6px;overflow:hidden;"><div style="height:100%;width:${Math.round(c/maxMuscle*100)}%;background:${c/maxMuscle<0.3?'#ef4444':c/maxMuscle<0.6?'#fbbf24':'#22c55e'};border-radius:3px;"></div></div><span style="font-size:11px;color:${c/maxMuscle<0.3?'#ef4444':'var(--muted)'};width:18px;text-align:right;">${c}</span></div>`).join('')}
+      ${leastTrained.length?`<div style="margin-top:7px;padding:7px 10px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.15);border-radius:7px;font-size:12px;color:var(--critical);">⚠️ Undertrained: ${leastTrained.join(', ')}</div>`:''}
+    </div>
+    <div style="background:rgba(251,191,36,0.04);border:1px solid rgba(251,191,36,0.2);border-radius:10px;padding:13px;">
+      <div style="font-size:12px;color:var(--gold);letter-spacing:0.5px;margin-bottom:9px;">⚡ GYM VERDICT</div>
+      ${vLines.map((l,i)=>`<p style="font-size:13px;color:${i===0?'var(--text)':'var(--muted)'};line-height:1.8;margin-bottom:${i<vLines.length-1?'7':'0'}px;">${l}</p>`).join('')}
+    </div>`;
+}
+
 // ─── BREATHE ─────────────────────────────────────────────────────────────────
 let breatheTimer=null;
 let breatheSessions=0;
@@ -3372,7 +4096,7 @@ function applyTheme(isLight){
   const active=document.querySelector('.view.active');
   if(active){
     const v=active.id.replace('view-','');
-    const renders={today:renderToday,tasks:renderTasks,week:renderWeek,graphs:renderGraphs,report:renderReport,meds:renderMeds,body:renderBody,money:renderMoney,journal:renderJournal,wins:renderWins,learn:renderLearn,goals:renderGoals,hard:renderHard,breathe:renderBreathe,habits_mgr:renderHabitsMgr,settings:renderSettings,review:renderWeeklyReview,movies:renderMovies,quotes:renderMyQuotes,wishlist:renderWishlist};
+    const renders={today:renderToday,tasks:renderTasks,week:renderWeek,graphs:renderGraphs,report:renderReport,meds:renderMeds,body:renderBody,gym:renderGym,money:renderMoney,journal:renderJournal,wins:renderWins,learn:renderLearn,goals:renderGoals,hard:renderHard,breathe:renderBreathe,habits_mgr:renderHabitsMgr,settings:renderSettings,review:renderWeeklyReview,movies:renderMovies,quotes:renderMyQuotes,wishlist:renderWishlist};
     if(renders[v])renders[v]();
     if(v==='today')updateRadar();
   }
@@ -3446,6 +4170,7 @@ function updateMobStreak(){
 // Init active date keys now that todayKey() is available
 activeTodayKey=todayKey();
 activeBodyKey=todayKey();
+activeGymKey=todayKey();
 activeJournalKey=todayKey();
 activeMedsKey=todayKey();
 activeMoneyMonth=todayKey().slice(0,7);
@@ -3460,6 +4185,12 @@ initPinLock();
   });
   const mp=document.getElementById('money-month-picker');
   if(mp)mp.value=td.slice(0,7);
+  const rp=document.getElementById('report-month-picker');
+  if(rp)rp.value=td.slice(0,7);
+  const gp=document.getElementById('gym-date-picker');
+  if(gp){gp.value=td;gp.max=td;}
+  const gsm=document.getElementById('gym-stats-month');
+  if(gsm)gsm.value=td.slice(0,7);
 })();
 renderToday();
 updateMobStreak();
@@ -3477,6 +4208,8 @@ setTimeout(showVersionToast,1200);
   <button class="mobile-nav-item" onclick="mobNav('hard',this)"><span class="mn-icon">🔥</span>HARD</button>
   <button class="mobile-nav-item" onclick="mobNav('meds',this)"><span class="mn-icon">💊</span>MEDS</button>
   <button class="mobile-nav-item" onclick="mobNav('body',this)"><span class="mn-icon">🩺</span>BODY</button>
+  <button class="mobile-nav-item" onclick="mobNav('gym',this)"><span class="mn-icon">🏋️</span>GYM</button>
+  <button class="mobile-nav-item" onclick="mobNav('gym',this)"><span class="mn-icon">🏋️</span>GYM</button>
   <button class="mobile-nav-item" onclick="mobNav('money',this)"><span class="mn-icon">💰</span>MONEY</button>
   <button class="mobile-nav-item" onclick="mobNav('movies',this)"><span class="mn-icon">🎬</span>MOVIES</button>
   <button class="mobile-nav-item" onclick="mobNav('quotes',this)"><span class="mn-icon">💭</span>QUOTES</button>
