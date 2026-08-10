@@ -538,6 +538,26 @@ body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;d
   </div>
 </div>
 
+
+<!-- AI ASSISTANT OVERLAY -->
+<div id="ai-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:99990;align-items:flex-end;justify-content:center;">
+  <div style="background:var(--surface);width:100%;max-width:600px;border-radius:20px 20px 0 0;padding:20px;max-height:80vh;display:flex;flex-direction:column;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--gold);">🤖 AI ASSISTANT</div>
+      <button onclick="closeAI()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:22px;">✕</button>
+    </div>
+    <div id="ai-messages" style="flex:1;overflow-y:auto;margin-bottom:12px;min-height:120px;max-height:50vh;"></div>
+    <div style="display:flex;gap:8px;">
+      <input id="ai-input" class="task-input" placeholder="Ask anything about your data..." style="flex:1;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAIMessage();}"/>
+      <button onclick="sendAIMessage()" class="save-btn" style="margin-top:0;flex-shrink:0;padding:9px 16px;">SEND</button>
+    </div>
+    <div id="ai-typing" style="font-size:12px;color:var(--muted);margin-top:6px;display:none;">AI is thinking...</div>
+  </div>
+</div>
+
+<!-- AI FAB BUTTON (floating) -->
+<button id="ai-fab" onclick="openAI()" style="position:fixed;bottom:90px;right:16px;width:52px;height:52px;border-radius:50%;background:var(--gold);border:none;font-size:22px;cursor:pointer;z-index:9000;box-shadow:0 4px 20px rgba(251,191,36,0.4);display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;touch-action:manipulation;">🤖</button>
+
 <div class="mobile-topbar">
   <div class="mobile-topbar-title">BACK ON TRACK</div>
   <div style="display:flex;align-items:center;gap:10px;">
@@ -653,7 +673,7 @@ body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;d
   <div class="grid-2">
     <div>
       <div class="panel">
-        <div class="panel-header"><span class="panel-title">HABIT CHECKLIST</span></div>
+        <div class="panel-header"><span class="panel-title">HABIT CHECKLIST</span><button id="ai-habit-insight-btn" onclick="aiHabitInsight()" style="background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.3);border-radius:6px;padding:4px 9px;color:var(--gold);font-family:'Space Mono',monospace;font-size:10px;cursor:pointer;letter-spacing:0.5px;white-space:nowrap;">🤖 HABIT INSIGHT</button></div>
         <div class="panel-body" id="habit-list"></div>
       </div>
       <div class="panel">
@@ -679,7 +699,15 @@ body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;d
         </div>
       </div>
       <div class="panel"><div class="panel-header"><span class="panel-title">TODAY'S RADAR</span></div><div class="panel-body"><div class="chart-wrap radar-wrap" style="height:190px"><canvas id="radar-chart"></canvas></div></div></div>
-      <div id="sunday-review-banner" style="display:none;background:rgba(168,85,247,0.07);border:1px solid rgba(168,85,247,0.25);border-radius:12px;padding:14px 16px;margin-top:12px;cursor:pointer;" onclick="showView('review')">
+      <div id="ai-morning-brief" style="display:none;background:rgba(251,191,36,0.06);border:1px solid rgba(251,191,36,0.2);border-radius:12px;padding:14px;margin-top:12px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--gold);">🤖 MORNING BRIEF</div>
+      <button onclick="document.getElementById('ai-morning-brief').style.display='none'" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;">✕</button>
+    </div>
+    <div id="ai-brief-content" style="font-size:13px;color:var(--muted);line-height:1.8;"></div>
+  </div>
+  <button onclick="generateMorningBrief()" style="width:100%;margin-top:10px;background:rgba(251,191,36,0.07);border:1px solid rgba(251,191,36,0.2);border-radius:10px;padding:11px;color:var(--gold);font-family:'Space Mono',monospace;font-size:12px;cursor:pointer;letter-spacing:0.5px;-webkit-tap-highlight-color:transparent;">🤖 GENERATE MORNING BRIEF</button>
+  <div id="sunday-review-banner" style="display:none;background:rgba(168,85,247,0.07);border:1px solid rgba(168,85,247,0.25);border-radius:12px;padding:14px 16px;margin-top:12px;cursor:pointer;" onclick="showView('review')">
     <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--purple);letter-spacing:0.5px;">📝 SUNDAY REVIEW TIME</div>
     <div style="font-size:13px;color:var(--muted);margin-top:4px;">10 minutes of reflection = weeks of progress. Tap to review.</div>
   </div>
@@ -746,6 +774,9 @@ body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;d
         <div class="panel-body">
           <div style="font-size:13px;color:var(--muted);letter-spacing:0.5px;margin-bottom:9px;">HOW WAS YOUR DAY? WHAT'S ON YOUR MIND?</div>
           <textarea class="journal-textarea" id="journal-input" placeholder="Write anything. No judgement. This is your space...&#10;&#10;What went well today?&#10;What was hard?&#10;How are you feeling?&#10;What do you want to do better tomorrow?"></textarea>
+          <button onclick="aiJournalPrompt()" style="margin-top:8px;width:100%;background:rgba(251,191,36,0.07);border:1px solid rgba(251,191,36,0.25);border-radius:8px;padding:9px;color:var(--gold);font-family:'Space Mono',monospace;font-size:12px;cursor:pointer;letter-spacing:0.5px;">🤖 GET AI PROMPT FOR TODAY</button>
+          <div id="ai-journal-prompt" style="display:none;margin-top:8px;background:rgba(168,85,247,0.07);border:1px solid rgba(168,85,247,0.2);border-radius:8px;padding:11px;font-size:13px;color:var(--muted);line-height:1.7;"></div>
+          
           <div style="display:flex;align-items:center;gap:11px;flex-wrap:wrap;">
             <button class="save-btn" onclick="saveJournal()">SAVE ENTRY</button>
             <span class="saved-flash" id="journal-saved">✓ SAVED</span>
@@ -769,7 +800,7 @@ body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;d
 
 <!-- WINS -->
 <div class="view" id="view-wins">
-  <div class="topbar"><div class="page-title">WINS LOG</div></div>
+  <div class="topbar"><div class="page-title">WINS LOG</div><button onclick="aiSuggestWins()" style="background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.3);border-radius:8px;padding:7px 12px;color:var(--gold);font-family:'Space Mono',monospace;font-size:11px;cursor:pointer;white-space:nowrap;letter-spacing:0.5px;">🤖 SUGGEST WINS</button></div>
   <div class="grid-2">
     <div>
       <div class="panel">
@@ -872,6 +903,41 @@ body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;d
     </div>
     <div>
       <div class="panel"><div class="panel-header"><span class="panel-title">DATA OVERVIEW</span></div><div class="panel-body" id="data-overview"></div></div>
+
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">🤖 AI ASSISTANT</span></div>
+        <div class="panel-body">
+          <div style="font-size:13px;color:var(--muted);letter-spacing:0.5px;margin-bottom:10px;">SELECT AI PROVIDER</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px;">
+            <button class="gym-type-btn" id="aiprov-anthropic" onclick="setAIProvider('anthropic')" style="font-size:11px;">🟣 CLAUDE</button>
+            <button class="gym-type-btn" id="aiprov-openai" onclick="setAIProvider('openai')" style="font-size:11px;opacity:0.4;">🟢 GPT-4o</button>
+            <button class="gym-type-btn" id="aiprov-gemini" onclick="setAIProvider('gemini')" style="font-size:11px;opacity:0.4;">🔵 GEMINI</button>
+            <button class="gym-type-btn" id="aiprov-groq" onclick="setAIProvider('groq')" style="font-size:11px;opacity:0.4;">⚡ GROQ</button>
+            <button class="gym-type-btn" id="aiprov-ollama" onclick="setAIProvider('ollama')" style="font-size:11px;opacity:0.4;">🏠 OLLAMA</button>
+            <button class="gym-type-btn" id="aiprov-xai" onclick="setAIProvider('xai')" style="font-size:11px;opacity:0.4;">✕ GROK</button>
+          </div>
+          <div id="ai-provider-info" style="font-size:12px;color:var(--muted);background:var(--surface2);border-radius:8px;padding:10px;margin-bottom:10px;line-height:1.7;"></div>
+          <div style="font-size:13px;color:var(--muted);letter-spacing:0.5px;margin-bottom:6px;">API KEY</div>
+          <div style="display:flex;gap:8px;margin-bottom:8px;">
+            <input type="password" id="ai-key-input" placeholder="Paste your API key..." style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 13px;color:var(--text);font-family:'Space Mono',monospace;font-size:12px;outline:none;min-width:0;"/>
+            <button onclick="toggleKeyVisibility()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--muted);cursor:pointer;font-size:14px;flex-shrink:0;" id="key-vis-btn">👁</button>
+          </div>
+          <div id="ai-model-row" style="margin-bottom:10px;display:none;">
+            <div style="font-size:13px;color:var(--muted);letter-spacing:0.5px;margin-bottom:6px;">MODEL (optional override)</div>
+            <input class="task-input" id="ai-model-input" placeholder="Leave blank for default..." style="width:100%;"/>
+          </div>
+          <div id="ai-ollama-url-row" style="margin-bottom:10px;display:none;">
+            <div style="font-size:13px;color:var(--muted);letter-spacing:0.5px;margin-bottom:6px;">OLLAMA URL</div>
+            <input class="task-input" id="ai-ollama-url" placeholder="http://localhost:11434" style="width:100%;"/>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="save-btn" onclick="saveApiKey()" style="margin-top:0;">SAVE</button>
+            <button class="exp-btn" onclick="testAIConnection()">TEST</button>
+            <button class="exp-btn" onclick="clearApiKey()">CLEAR</button>
+          </div>
+          <div id="ai-key-status" style="margin-top:8px;font-size:12px;"></div>
+        </div>
+      </div>
       <div class="panel">
         <div class="panel-header"><span class="panel-title">SHOW / HIDE TABS</span></div>
         <div class="panel-body" id="tab-toggles-panel"></div>
@@ -1047,11 +1113,11 @@ body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;d
         <div class="panel-body"><div class="chart-wrap" style="height:180px"><canvas id="weight-chart"></canvas></div></div>
       </div>
       <div class="panel">
-        <div class="panel-header"><span class="panel-title">SLEEP & WATER TREND</span></div>
+        <div class="panel-header"><span class="panel-title">SLEEP & WATER TREND</span><button onclick="aiSleepCoach()" style="background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.3);border-radius:6px;padding:4px 9px;color:var(--gold);font-family:'Space Mono',monospace;font-size:10px;cursor:pointer;white-space:nowrap;">🤖 SLEEP COACH</button></div>
         <div class="panel-body"><div class="chart-wrap" style="height:180px"><canvas id="sleep-chart"></canvas></div></div>
       </div>
       <div class="panel">
-        <div class="panel-header"><span class="panel-title">SYMPTOM HISTORY</span></div>
+        <div class="panel-header"><span class="panel-title">SYMPTOM HISTORY</span><button onclick="aiSymptomAnalysis()" style="background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.3);border-radius:6px;padding:4px 9px;color:var(--gold);font-family:'Space Mono',monospace;font-size:10px;cursor:pointer;white-space:nowrap;">🤖 ANALYSE</button></div>
         <div class="panel-body" id="symptoms-history" style="max-height:220px;overflow-y:auto;"></div>
       </div>
     </div>
@@ -1124,6 +1190,12 @@ body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;d
       <div class="panel" id="gym-exercises-panel">
         <div class="panel-header"><span class="panel-title">EXERCISES LOGGED</span></div>
         <div class="panel-body">
+          <!-- Natural language entry -->
+          <div style="margin-bottom:12px;background:rgba(251,191,36,0.04);border:1px solid rgba(251,191,36,0.2);border-radius:9px;padding:12px;">
+            <div style="font-size:11px;color:var(--gold);letter-spacing:0.5px;margin-bottom:7px;">🤖 NATURAL LANGUAGE ENTRY</div>
+            <textarea id="gym-nl-input" class="journal-textarea" placeholder="Type your workout naturally...&#10;e.g. bench 4x8 at 85kg, incline 3x10 at 60kg, cable flies 3x15" style="min-height:70px;margin-bottom:8px;"></textarea>
+            <button onclick="aiParseGymEntry()" style="width:100%;background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.3);border-radius:8px;padding:8px;color:var(--gold);font-family:'Space Mono',monospace;font-size:11px;cursor:pointer;letter-spacing:0.5px;">🤖 PARSE & ADD ALL EXERCISES</button>
+          </div>
           <!-- Add exercise form -->
           <div style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:12px;margin-bottom:12px;">
             <input class="task-input" id="gym-ex-name" placeholder="Exercise name..." style="width:100%;margin-bottom:8px;" maxlength="40"/>
@@ -1152,13 +1224,27 @@ body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;d
               <button class="gym-muscle-btn" id="mg-core" onclick="setMuscle('core')">Core</button>
               <button class="gym-muscle-btn" id="mg-cardio" onclick="setMuscle('cardio')">Cardio</button>
             </div>
-            <button class="save-btn" onclick="addGymExercise()" style="margin-top:0;width:100%;">+ ADD EXERCISE</button>
+            <div style="display:flex;gap:7px;">
+            <button class="save-btn" onclick="addGymExercise()" style="margin-top:0;flex:1;">+ ADD EXERCISE</button>
+            <button onclick="aiClassifyGym()" style="background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.3);border-radius:8px;padding:9px 12px;color:var(--gold);font-family:'Space Mono',monospace;font-size:11px;cursor:pointer;flex-shrink:0;letter-spacing:0.5px;white-space:nowrap;">🤖 AUTO-CLASSIFY</button>
+          </div>
           </div>
           <div id="gym-exercise-list"></div>
           <button class="save-btn" onclick="saveGymSession()" style="width:100%;background:var(--health);margin-top:4px;">💾 SAVE SESSION</button>
           <span class="saved-flash" id="gym-saved" style="margin-left:0;margin-top:8px;display:block;text-align:center;">✓ SESSION SAVED</span>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- PROGRESSION ANALYSIS -->
+  <div class="panel" style="margin-top:4px;">
+    <div class="panel-header">
+      <span class="panel-title">PROGRESSION TRACKER</span>
+      <button onclick="aiProgressionAnalysis()" style="background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.3);border-radius:6px;padding:4px 9px;color:var(--gold);font-family:'Space Mono',monospace;font-size:10px;cursor:pointer;white-space:nowrap;">🤖 ANALYSE</button>
+    </div>
+    <div class="panel-body">
+      <div id="gym-progression-content" style="font-size:13px;color:var(--muted);">Log at least 2 sessions with the same exercises to see progression.</div>
     </div>
   </div>
 
@@ -1174,6 +1260,7 @@ body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;d
 
 <!-- MONEY TRACKER -->
 <div class="view" id="view-money">
+  <div id="ai-money-insight" style="display:none;margin:0 0 12px;background:rgba(251,191,36,0.06);border:1px solid rgba(251,191,36,0.2);border-radius:10px;padding:12px;font-size:13px;color:var(--muted);line-height:1.7;"></div>
   <div class="topbar">
     <div class="page-title">MONEY TRACKER</div>
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
@@ -1312,7 +1399,7 @@ body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;d
 
 <!-- LONG TERM GOALS -->
 <div class="view" id="view-goals">
-  <div class="topbar"><div class="page-title">LONG TERM GOALS</div></div>
+  <div class="topbar"><div class="page-title">LONG TERM GOALS</div><button onclick="aiGoalCoach()" style="background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.3);border-radius:8px;padding:7px 12px;color:var(--gold);font-family:'Space Mono',monospace;font-size:11px;cursor:pointer;white-space:nowrap;letter-spacing:0.5px;">🤖 GOAL COACH</button></div>
   <div class="grid-2">
     <div>
       <div class="panel">
@@ -1365,7 +1452,7 @@ body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;d
 
 <!-- HARD THINGS -->
 <div class="view" id="view-hard">
-  <div class="topbar"><div class="page-title">HARD THINGS</div></div>
+  <div class="topbar"><div class="page-title">HARD THINGS</div><button onclick="aiHardBreakdown()" style="background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.3);border-radius:8px;padding:7px 12px;color:var(--gold);font-family:'Space Mono',monospace;font-size:11px;cursor:pointer;white-space:nowrap;letter-spacing:0.5px;">🤖 BREAK IT DOWN</button></div>
   <div style="font-size:14px;color:var(--muted);margin-bottom:20px;line-height:1.7;">Things you keep avoiding. Confronting them here is the first step to actually dealing with them.</div>
   <div class="grid-2">
     <div>
@@ -1404,7 +1491,7 @@ body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;d
 
 <!-- WEEKLY REVIEW -->
 <div class="view" id="view-review">
-  <div class="topbar"><div class="page-title">WEEKLY REVIEW</div><div class="badge" id="review-week-badge"></div></div>
+  <div class="topbar"><div class="page-title">WEEKLY REVIEW</div><div style="display:flex;gap:8px;align-items:center;"><div class="badge" id="review-week-badge"></div><button onclick="aiWeeklySynthesis()" style="background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.3);border-radius:8px;padding:5px 10px;color:var(--gold);font-family:'Space Mono',monospace;font-size:10px;cursor:pointer;white-space:nowrap;letter-spacing:0.5px;">🤖 AI SYNTHESIS</button></div></div>
   <div style="font-size:14px;color:var(--muted);margin-bottom:20px;line-height:1.7;">Every Sunday. 10 minutes. Honest reflection. This is how you improve week after week.</div>
   <div class="grid-2">
     <div>
@@ -1573,7 +1660,7 @@ const QUOTES=[
   {text:"Motivation gets you started. Habit keeps you going.",author:"— Jim Ryun"},
 ];
 
-const APP_VERSION="2.8.0";
+const APP_VERSION="3.0.0";
 const STORAGE_KEY="bot_v4";
 
 function migrateData(data){
@@ -1698,7 +1785,7 @@ function showView(v){
   if(v==='journal'){activeJournalKey=td;const dp=document.getElementById('journal-date-picker');if(dp)dp.value=td;}
   if(v==='meds'){activeMedsKey=td;const dp=document.getElementById('meds-date-picker');if(dp)dp.value=td;}
   if(v==='gym'){activeGymKey=td;const dp=document.getElementById('gym-date-picker');if(dp){dp.value=td;dp.max=td;}}
-  const renders={tasks:renderTasks,journal:renderJournal,wins:renderWins,learn:renderLearn,goals:renderGoals,hard:renderHard,meds:renderMeds,body:renderBody,gym:renderGym,money:renderMoney,movies:renderMovies,quotes:renderMyQuotes,wishlist:renderWishlist,breathe:renderBreathe,week:renderWeek,review:renderWeeklyReview,graphs:renderGraphs,report:renderReport,habits_mgr:renderHabitsMgr,settings:renderSettings};
+  const renders={tasks:renderTasks,journal:renderJournal,wins:renderWins,learn:renderLearn,goals:renderGoals,hard:renderHard,meds:renderMeds,body:renderBody,gym:renderGym,money:()=>{renderMoney();if(getApiKey()||AI_PROVIDERS[currentAIProvider]?.noKey)setTimeout(aiMoneyAnalysis,800);},movies:renderMovies,quotes:renderMyQuotes,wishlist:renderWishlist,breathe:renderBreathe,week:renderWeek,review:renderWeeklyReview,graphs:renderGraphs,report:renderReport,habits_mgr:renderHabitsMgr,settings:renderSettings};
   if(renders[v])renders[v]();
 }
 
@@ -2501,7 +2588,7 @@ function renderReport(){
     // Personal note context
     if(personalNote)lines.push('Personal context this month: "'+personalNote+'" — factor this into how you read these numbers.');
 
-    // Closing
+    // Closing (formula-based — AI adds extra depth below)
     if(avgScore>=70)lines.push('Next month: maintain what is working, fix the one habit that is dragging your score. Do not change everything at once.');
     else lines.push('Next month: pick two habits and make them automatic before adding anything else. Simplify. Show up.');
 
@@ -2509,6 +2596,10 @@ function renderReport(){
   }
 
   const verdictLines=buildVerdict();
+
+  // ── AI VERDICT (async — fetched separately) ──────────────────────────────────
+  const aiVerdictKey='ai_verdict_'+monthStr;
+  const cachedAIVerdict=sessionStorage.getItem(aiVerdictKey);
 
   // ── BUILD HTML ─────────────────────────────────────────────────────────────
   const st=(label,val,color)=>`<div class="report-stat"><span class="report-stat-label">${label}</span><span class="report-stat-val" style="color:${color}">${val}</span></div>`;
@@ -2655,6 +2746,7 @@ function saveRetestDate(){
 function renderSettings(){
   renderTabToggles();
   renderPinSettings();
+  renderAIKeyStatus();
   const vd=document.getElementById('current-version-display');
   if(vd)vd.textContent=APP_VERSION;
   const rd=retestDays();document.getElementById('retest-big').textContent=rd;
@@ -3720,6 +3812,520 @@ async function gdriveRestore(){
 }
 
 
+
+
+// ─── AI ASSISTANT SYSTEM ─────────────────────────────────────────────────────
+
+// Provider configurations
+const AI_PROVIDERS = {
+  anthropic:{
+    name:'Claude (Anthropic)',
+    placeholder:'sk-ant-api03-...',
+    url:'https://console.anthropic.com',
+    info:'Pay per use. ~₹5-15/day heavy use. Best at analysis and reasoning.',
+    defaultModel:'claude-haiku-4-5-20251001',
+    free:false,
+  },
+  openai:{
+    name:'GPT-4o (OpenAI)',
+    placeholder:'sk-...',
+    url:'https://platform.openai.com/api-keys',
+    info:'Pay per use. GPT-4o mini is very cheap. Widely compatible.',
+    defaultModel:'gpt-4o-mini',
+    free:false,
+  },
+  gemini:{
+    name:'Gemini (Google)',
+    placeholder:'AIza...',
+    url:'https://aistudio.google.com/app/apikey',
+    info:'Free tier available. 1500 requests/day free on Gemini Flash.',
+    defaultModel:'gemini-1.5-flash',
+    free:true,
+  },
+  groq:{
+    name:'Groq',
+    placeholder:'gsk_...',
+    url:'https://console.groq.com/keys',
+    info:'Very fast inference. Generous free tier. Runs open source models.',
+    defaultModel:'llama-3.1-8b-instant',
+    free:true,
+  },
+  ollama:{
+    name:'Ollama (Local)',
+    placeholder:'No key needed',
+    url:'https://ollama.com',
+    info:'Runs 100% on your Mac. Free, private, offline. Needs Ollama installed.',
+    defaultModel:'llama3.2',
+    free:true,
+    noKey:true,
+  },
+  xai:{
+    name:'Grok (xAI)',
+    placeholder:'xai-...',
+    url:'https://console.x.ai',
+    info:'Pay per use. Fast and capable. Access via x.ai console.',
+    defaultModel:'grok-beta',
+    free:false,
+  },
+};
+
+let currentAIProvider = localStorage.getItem('bot_ai_provider')||'anthropic';
+
+function getApiKey(provider){
+  const p=provider||currentAIProvider;
+  return localStorage.getItem('bot_ai_key_'+p)||'';
+}
+
+function setAIProvider(p){
+  currentAIProvider=p;
+  localStorage.setItem('bot_ai_provider',p);
+  // Update button states
+  Object.keys(AI_PROVIDERS).forEach(k=>{
+    const btn=document.getElementById('aiprov-'+k);
+    if(btn)btn.style.opacity=k===p?'1':'0.4';
+  });
+  // Update info
+  const info=document.getElementById('ai-provider-info');
+  if(info){
+    const prov=AI_PROVIDERS[p];
+    info.innerHTML=`<b style="color:var(--text);">${prov.name}</b><br>${prov.info}<br><span style="color:var(--gold);">Get key: ${prov.url}</span>`;
+  }
+  // Update placeholder
+  const inp=document.getElementById('ai-key-input');
+  if(inp){
+    inp.placeholder=AI_PROVIDERS[p].placeholder;
+    inp.value=AI_PROVIDERS[p].noKey?'':getApiKey(p)||'';
+    inp.disabled=!!AI_PROVIDERS[p].noKey;
+  }
+  // Show/hide ollama URL row
+  const ollamaRow=document.getElementById('ai-ollama-url-row');
+  if(ollamaRow)ollamaRow.style.display=p==='ollama'?'block':'none';
+  // Show model override
+  const modelRow=document.getElementById('ai-model-row');
+  if(modelRow)modelRow.style.display='block';
+  const modelInp=document.getElementById('ai-model-input');
+  if(modelInp){
+    const saved=localStorage.getItem('bot_ai_model_'+p)||'';
+    modelInp.placeholder='Default: '+AI_PROVIDERS[p].defaultModel;
+    modelInp.value=saved;
+  }
+  renderAIKeyStatus();
+}
+
+function saveApiKey(){
+  const p=currentAIProvider;
+  const prov=AI_PROVIDERS[p];
+  if(!prov.noKey){
+    const k=document.getElementById('ai-key-input').value.trim();
+    if(!k){alert('Please enter your API key.');return;}
+    localStorage.setItem('bot_ai_key_'+p,k);
+  }
+  // Save custom model if set
+  const modelInp=document.getElementById('ai-model-input');
+  if(modelInp&&modelInp.value.trim()){
+    localStorage.setItem('bot_ai_model_'+p,modelInp.value.trim());
+  } else {
+    localStorage.removeItem('bot_ai_model_'+p);
+  }
+  // Save Ollama URL if set
+  if(p==='ollama'){
+    const urlInp=document.getElementById('ai-ollama-url');
+    if(urlInp&&urlInp.value.trim())localStorage.setItem('bot_ollama_url',urlInp.value.trim());
+  }
+  renderAIKeyStatus();
+  const fl=document.createElement('div');
+  fl.style.cssText='position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:var(--health);color:#fff;padding:8px 18px;border-radius:20px;font-size:13px;font-family:Space Mono,monospace;z-index:99998;letter-spacing:0.5px;';
+  fl.textContent='✅ Saved — '+AI_PROVIDERS[p].name;
+  document.body.appendChild(fl);setTimeout(()=>fl.remove(),2000);
+}
+
+function clearApiKey(){
+  if(!confirm('Clear '+AI_PROVIDERS[currentAIProvider].name+' settings?'))return;
+  localStorage.removeItem('bot_ai_key_'+currentAIProvider);
+  localStorage.removeItem('bot_ai_model_'+currentAIProvider);
+  const inp=document.getElementById('ai-key-input');
+  if(inp)inp.value='';
+  renderAIKeyStatus();
+}
+
+function toggleKeyVisibility(){
+  const inp=document.getElementById('ai-key-input');
+  const btn=document.getElementById('key-vis-btn');
+  inp.type=inp.type==='password'?'text':'password';
+  btn.textContent=inp.type==='password'?'👁':'🔒';
+}
+
+async function testAIConnection(){
+  const btn=event.target;
+  btn.textContent='TESTING...';btn.disabled=true;
+  const result=await callAI('You are a test.','Reply with exactly: Connection OK',50);
+  btn.textContent='TEST';btn.disabled=false;
+  if(result){
+    const fl=document.createElement('div');
+    fl.style.cssText='position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:var(--health);color:#fff;padding:8px 18px;border-radius:20px;font-size:13px;font-family:Space Mono,monospace;z-index:99998;';
+    fl.textContent='✅ Connected to '+AI_PROVIDERS[currentAIProvider].name;
+    document.body.appendChild(fl);setTimeout(()=>fl.remove(),3000);
+  } else {
+    alert('Connection failed. Check your API key and try again.');
+  }
+}
+
+function renderAIKeyStatus(){
+  const el=document.getElementById('ai-key-status');if(!el)return;
+  const p=currentAIProvider;
+  const prov=AI_PROVIDERS[p];
+  const hasKey=prov.noKey||!!getApiKey(p);
+  el.innerHTML=hasKey
+    ?`<span style="color:#22c55e;">✅ ${prov.name} ready</span>`
+    :`<span style="color:var(--muted);">No key set for ${prov.name}</span>`;
+  // Restore button states
+  setAIProvider(p);
+}
+
+// ── Core AI call — routes to correct provider ─────────────────────────────────
+function getModel(){
+  const p=currentAIProvider;
+  return localStorage.getItem('bot_ai_model_'+p)||AI_PROVIDERS[p].defaultModel;
+}
+
+async function callAI(systemPrompt, userMessage, maxTokens=800){
+  const p=currentAIProvider;
+  const key=getApiKey(p);
+  if(!key&&!AI_PROVIDERS[p].noKey){
+    alert('No API key set for '+AI_PROVIDERS[p].name+'. Go to Settings → AI ASSISTANT.');
+    return null;
+  }
+  try{
+    switch(p){
+      case 'anthropic': return await callAnthropic(systemPrompt,userMessage,maxTokens);
+      case 'openai':    return await callOpenAI(systemPrompt,userMessage,maxTokens);
+      case 'gemini':    return await callGemini(systemPrompt,userMessage,maxTokens);
+      case 'groq':      return await callGroq(systemPrompt,userMessage,maxTokens);
+      case 'ollama':    return await callOllama(systemPrompt,userMessage,maxTokens);
+      case 'xai':       return await callXAI(systemPrompt,userMessage,maxTokens);
+      default: return await callAnthropic(systemPrompt,userMessage,maxTokens);
+    }
+  }catch(e){
+    console.error('AI error:',e);
+    alert('AI error: '+e.message);
+    return null;
+  }
+}
+
+async function callAnthropic(sys,msg,tokens){
+  const res=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':getApiKey('anthropic'),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({model:getModel(),max_tokens:tokens,system:sys,messages:[{role:'user',content:msg}]})
+  });
+  if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'Anthropic error '+res.status);}
+  const d=await res.json();return d.content[0].text;
+}
+
+async function callOpenAI(sys,msg,tokens){
+  const res=await fetch('https://api.openai.com/v1/chat/completions',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+getApiKey('openai')},
+    body:JSON.stringify({model:getModel(),max_tokens:tokens,messages:[{role:'system',content:sys},{role:'user',content:msg}]})
+  });
+  if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'OpenAI error '+res.status);}
+  const d=await res.json();return d.choices[0].message.content;
+}
+
+async function callGemini(sys,msg,tokens){
+  const key=getApiKey('gemini');
+  const model=getModel();
+  const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      system_instruction:{parts:[{text:sys}]},
+      contents:[{parts:[{text:msg}]}],
+      generationConfig:{maxOutputTokens:tokens}
+    })
+  });
+  if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'Gemini error '+res.status);}
+  const d=await res.json();return d.candidates[0].content.parts[0].text;
+}
+
+async function callGroq(sys,msg,tokens){
+  const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+getApiKey('groq')},
+    body:JSON.stringify({model:getModel(),max_tokens:tokens,messages:[{role:'system',content:sys},{role:'user',content:msg}]})
+  });
+  if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'Groq error '+res.status);}
+  const d=await res.json();return d.choices[0].message.content;
+}
+
+async function callOllama(sys,msg,tokens){
+  const url=localStorage.getItem('bot_ollama_url')||'http://localhost:11434';
+  const res=await fetch(url+'/api/chat',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({model:getModel(),stream:false,messages:[{role:'system',content:sys},{role:'user',content:msg}]})
+  });
+  if(!res.ok)throw new Error('Ollama error '+res.status+'. Is Ollama running?');
+  const d=await res.json();return d.message.content;
+}
+
+async function callXAI(sys,msg,tokens){
+  const res=await fetch('https://api.x.ai/v1/chat/completions',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+getApiKey('xai')},
+    body:JSON.stringify({model:getModel(),max_tokens:tokens,messages:[{role:'system',content:sys},{role:'user',content:msg}]})
+  });
+  if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'xAI error '+res.status);}
+  const d=await res.json();return d.choices[0].message.content;
+}
+
+
+// ─── AI FEATURE FUNCTIONS ────────────────────────────────────────────────────
+
+// Helper: show AI result in a dismissible popup
+function showAIPopup(title, content){
+  const existing=document.getElementById('ai-result-popup');
+  if(existing)existing.remove();
+  const el=document.createElement('div');
+  el.id='ai-result-popup';
+  el.style.cssText='position:fixed;bottom:90px;left:10px;right:10px;max-height:60vh;overflow-y:auto;background:var(--surface);border:1px solid var(--gold);border-radius:14px;padding:16px;font-size:13px;color:var(--text);line-height:1.8;z-index:9998;box-shadow:0 8px 32px rgba(0,0,0,0.4);';
+  el.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><span style="font-size:12px;color:var(--gold);letter-spacing:0.5px;">${title}</span><button onclick="document.getElementById('ai-result-popup').remove()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;">✕</button></div><div style="color:var(--muted);">${content.replace(/\n/g,'<br>')}</div>`;
+  document.body.appendChild(el);
+}
+
+// Helper: set btn loading state
+function btnLoading(btn, loading, originalText){
+  if(loading){btn.dataset.orig=btn.textContent;btn.textContent='⏳ THINKING...';btn.disabled=true;}
+  else{btn.textContent=btn.dataset.orig||originalText;btn.disabled=false;}
+}
+
+// 1. SLEEP COACHING
+async function aiSleepCoach(){
+  const btn=event.target;btnLoading(btn,true);
+  const last14=getLast(14);
+  const sleepData=last14.map(k=>{
+    const b=(db.bodyLog&&db.bodyLog[k])||{};
+    return k+': '+( b.sleepHours?b.sleepHours+'h':'no data')+(b.sleepQuality?' q'+b.sleepQuality+'/10':'')+(b.energy?' e'+b.energy+'/10':'');
+  }).join(', ');
+  const scores=last14.map(k=>k+':'+getScore(k)+'%').join(', ');
+  const result=await callAI(
+    'You are a sleep coach. Analyse the sleep data and habit scores. Give 3-4 specific insights and 2 concrete recommendations. Be direct and personal.',
+    'My last 14 days sleep: '+sleepData+'. My habit scores those days: '+scores
+  );
+  btnLoading(btn,false);
+  if(result)showAIPopup('🛏 SLEEP COACH ANALYSIS',result);
+}
+
+// 2. WORKOUT PROGRESSION
+async function aiProgressionAnalysis(){
+  const btn=event.target;btnLoading(btn,true);
+  // Build exercise history
+  const allLogs=db.gymLog||{};
+  const exerciseHistory={};
+  Object.keys(allLogs).sort().forEach(date=>{
+    (allLogs[date].exercises||[]).forEach(ex=>{
+      const name=ex.name.toLowerCase().trim();
+      if(!exerciseHistory[name])exerciseHistory[name]=[];
+      exerciseHistory[name].push({date,sets:ex.sets,reps:ex.reps,weight:ex.weight});
+    });
+  });
+  // Show progression table (no AI needed for this)
+  const el=document.getElementById('gym-progression-content');
+  const exercises=Object.keys(exerciseHistory).filter(e=>exerciseHistory[e].length>=2);
+  if(!exercises.length){
+    if(el)el.innerHTML='<div style="color:var(--muted);font-size:13px;">Log the same exercise in at least 2 sessions to see progression.</div>';
+    btnLoading(btn,false);return;
+  }
+  // Build progression data string for AI
+  const progStr=exercises.slice(0,8).map(e=>{
+    const hist=exerciseHistory[e];
+    const first=hist[0];const last=hist[hist.length-1];
+    return `${e}: started ${first.weight||'?'}kg x${first.sets||'?'}x${first.reps||'?'} (${first.date}), now ${last.weight||'?'}kg x${last.sets||'?'}x${last.reps||'?'} (${last.date}), ${hist.length} sessions`;
+  }).join('. ');
+  // Render table
+  if(el){
+    el.innerHTML=exercises.slice(0,8).map(e=>{
+      const hist=exerciseHistory[e];
+      const first=hist[0];const latest=hist[hist.length-1];
+      const wChange=latest.weight&&first.weight?parseFloat(latest.weight)-parseFloat(first.weight):null;
+      const color=wChange>0?'#22c55e':wChange<0?'#ef4444':'var(--muted)';
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
+        <div><div style="font-size:13px;font-weight:700;color:var(--text-strong);text-transform:capitalize;">${e}</div>
+        <div style="font-size:11px;color:var(--muted);">${hist.length} sessions · First: ${first.weight||'?'}kg</div></div>
+        <div style="text-align:right;"><div style="font-size:14px;font-weight:700;color:${color};">${latest.weight||'?'}kg ${wChange!==null?(wChange>0?'↑+'+wChange:wChange<0?'↓'+wChange:'→'):''}kg</div>
+        <div style="font-size:11px;color:var(--muted);">${latest.sets||'?'}×${latest.reps||'?'} reps</div></div>
+      </div>`;
+    }).join('');
+  }
+  const result=await callAI(
+    'You are a strength coach. Analyse this exercise progression data. Identify stalls, good progress, and give 2-3 specific recommendations. Be concise and direct.',
+    'Exercise progression: '+progStr
+  );
+  btnLoading(btn,false);
+  if(result)showAIPopup('📈 PROGRESSION ANALYSIS',result);
+}
+
+// 3. NATURAL LANGUAGE GYM ENTRY
+async function aiParseGymEntry(){
+  const input=document.getElementById('gym-nl-input');
+  const text=input.value.trim();
+  if(!text){alert('Type your workout first.');return;}
+  const btn=event.target;btnLoading(btn,true,'🤖 PARSE & ADD ALL EXERCISES');
+  const result=await callAI(
+    'Parse the workout description into a JSON array of exercises. Each exercise: {"name":"exercise name","sets":"number","reps":"rep range or number","weight":"weight in kg or empty string","muscle":"chest|back|shoulders|biceps|triceps|legs|core|cardio"}. Respond ONLY with valid JSON array, no other text.',
+    'Parse this workout: '+text
+  );
+  btnLoading(btn,false,'🤖 PARSE & ADD ALL EXERCISES');
+  if(!result)return;
+  try{
+    const clean=result.replace(/```json|```/g,'').trim();
+    const exercises=JSON.parse(clean);
+    if(!Array.isArray(exercises))throw new Error('Not an array');
+    exercises.forEach(ex=>{
+      pendingExercises.push({id:Date.now()+Math.random(),name:ex.name||'',sets:ex.sets||'',reps:ex.reps||'',weight:ex.weight||'',muscle:ex.muscle||'chest'});
+    });
+    input.value='';
+    renderExerciseList();
+    // Auto-classify
+    if(exercises.length){aiClassifyGym();}
+    const fl=document.createElement('div');
+    fl.style.cssText='position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:var(--health);color:#fff;padding:8px 18px;border-radius:20px;font-size:13px;font-family:Space Mono,monospace;z-index:99998;';
+    fl.textContent='✅ Added '+exercises.length+' exercises';
+    document.body.appendChild(fl);setTimeout(()=>fl.remove(),2000);
+  }catch(e){
+    alert('Could not parse. Try being more specific with exercise names and weights.');
+  }
+}
+
+// 4. MOOD PATTERN DETECTION
+async function aiMoodPattern(){
+  const btn=event.target;btnLoading(btn,true);
+  const last30=getLast(30);
+  const moodData=last30.filter(k=>db.mood&&db.mood[k]).map(k=>{
+    const d=new Date(k+'T00:00:00');
+    return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()]+' '+k+': mood '+db.mood[k]+'/10, score '+getScore(k)+'%';
+  }).join('. ');
+  if(!moodData){alert('Log mood for at least a few days first.');btnLoading(btn,false);return;}
+  const result=await callAI(
+    'You are a mood and behaviour analyst. Look for patterns — day of week trends, correlations with habit scores, triggers, and recovery patterns. Give 3-4 specific insights. Be direct and personal.',
+    'My last 30 days mood and habit data: '+moodData
+  );
+  btnLoading(btn,false);
+  if(result)showAIPopup('😊 MOOD PATTERN ANALYSIS',result);
+}
+
+// 5. GOAL COACHING
+async function aiGoalCoach(){
+  const btn=event.target;btnLoading(btn,true);
+  const goals=(db.goals||[]).filter(g=>!g.done);
+  if(!goals.length){alert('Add some goals first.');btnLoading(btn,false);return;}
+  const goalStr=goals.map(g=>`Goal: "${g.title}", Why: "${g.why||'not set'}", Deadline: ${g.deadline||'no deadline'}, Progress: ${g.steps?Math.round(g.steps.filter(s=>s.done).length/Math.max(g.steps.length,1)*100)+'%':'no steps'}`).join('. ');
+  const result=await callAI(
+    'You are a goal coach. Review these goals and give specific, actionable coaching. For each goal identify if it is on track, what is blocking it, and the single most important next action. Be direct.',
+    buildDataContext()+'\n\nMy current goals: '+goalStr
+  );
+  btnLoading(btn,false);
+  if(result)showAIPopup('🏆 GOAL COACHING',result);
+}
+
+// 6. SYMPTOM PATTERN ANALYSIS
+async function aiSymptomAnalysis(){
+  const btn=event.target;btnLoading(btn,true);
+  const symptomDays=Object.keys(db.bodyLog||{}).filter(k=>db.bodyLog[k].symptoms).sort();
+  if(symptomDays.length<3){alert('Log symptoms for at least 3 days first.');btnLoading(btn,false);return;}
+  const symptomStr=symptomDays.map(k=>{
+    const b=db.bodyLog[k];
+    return k+': "'+b.symptoms+'" sleep:'+( b.sleepHours||'?')+'h energy:'+(b.energy||'?')+'/10 habits:'+getScore(k)+'%';
+  }).join('. ');
+  const result=await callAI(
+    'You are a health pattern analyst. Look for correlations between symptoms, sleep, energy, and habit performance. Identify triggers and patterns. Give 3-4 specific insights. Note: you are not a doctor — focus on observable patterns only.',
+    'My symptom log: '+symptomStr
+  );
+  btnLoading(btn,false);
+  if(result)showAIPopup('🩺 SYMPTOM PATTERN ANALYSIS',result);
+}
+
+// 7. HARD THINGS BREAKDOWN
+async function aiHardBreakdown(){
+  const btn=event.target;btnLoading(btn,true);
+  const hard=(db.hard||[]).filter(h=>!h.done);
+  if(!hard.length){alert('Add something to your Hard Things list first.');btnLoading(btn,false);return;}
+  // Ask which hard thing to break down
+  const names=hard.map((h,i)=>(i+1)+'. '+h.title).join(', ');
+  const choice=prompt('Hard thing to break down - '+names+' - type number:');
+  const idx=parseInt(choice)-1;
+  if(isNaN(idx)||idx<0||idx>=hard.length){btnLoading(btn,false);return;}
+  const thing=hard[idx];
+  const result=await callAI(
+    'You are a coach helping someone tackle a hard thing. Ask yourself: what is the real fear here? What is the first concrete step? Break this down into 3 specific actionable next steps. Be direct, specific, and encouraging without being generic.',
+    'Hard thing: "'+thing.title+'". Why it matters: "'+(thing.why||'not specified')+'". First step noted: "'+(thing.step||'none yet')+'"'
+  );
+  btnLoading(btn,false);
+  if(result)showAIPopup('🔥 BREAKING DOWN: '+thing.title.toUpperCase(),result);
+}
+
+// 8. AUTO-SUGGEST WINS
+async function aiSuggestWins(){
+  const btn=event.target;btnLoading(btn,true);
+  const today=todayKey();
+  const todayHabits=(db.habits&&db.habits[today])||{};
+  const doneTodayCount=HABITS.filter(h=>todayHabits[h.id]===true).length;
+  const gymToday=(db.gymLog&&db.gymLog[today])||{};
+  const tasks=(db.tasks&&db.tasks[today])||[];
+  const tasksDone=tasks.filter(t=>t.done).length;
+  const streak=getStreak();
+  const result=await callAI(
+    'Based on the data, suggest 2-3 wins the user could log today. Each win should be specific, positive, and factual based on their data. Format as a simple list. Make them feel earned, not hollow.',
+    buildDataContext()+'\nToday gym: '+(gymToday.type||'none')+'. Tasks done: '+tasksDone+'. Habits: '+doneTodayCount+'/'+HABITS.length+'. Streak: '+streak+' days.'
+  );
+  btnLoading(btn,false);
+  if(!result)return;
+  showAIPopup('⭐ SUGGESTED WINS FOR TODAY',result+'<br><br><small style="color:var(--muted);">Go to the wins log to add these.</small>');
+}
+
+// 9. WEEKLY AI SYNTHESIS
+async function aiWeeklySynthesis(){
+  const btn=event.target;btnLoading(btn,true);
+  const keys=getLast(7);
+  const journalEntries=keys.filter(k=>db.journal&&db.journal[k]).map(k=>'['+k+']: '+db.journal[k].text.substring(0,100)).join('. ');
+  const weekData=keys.map(k=>{
+    const mood=db.mood&&db.mood[k];
+    const gym=db.gymLog&&db.gymLog[k];
+    return k+': score '+getScore(k)+'%, mood '+(mood||'?')+'/10'+(gym&&gym.type?' gym:'+gym.type:'');
+  }).join('. ');
+  const result=await callAI(
+    'You are a personal coach writing a weekly synthesis. Read the week data and journal entries together. Identify the main themes, what the numbers say vs what the journals say, key patterns, and 2 focus areas for next week. Write 4-6 sentences. Make it feel like a real coach who read everything.',
+    'Week data: '+weekData+'. Journal excerpts: '+(journalEntries||'no entries this week'),
+    500
+  );
+  btnLoading(btn,false);
+  if(!result)return;
+  // Show in weekly review section
+  const el=document.getElementById('review-stats');
+  if(el){
+    const aiDiv=document.createElement('div');
+    aiDiv.style.cssText='margin-top:12px;padding:12px;background:rgba(251,191,36,0.05);border:1px solid rgba(251,191,36,0.2);border-radius:10px;';
+    aiDiv.innerHTML='<div style="font-size:11px;color:var(--gold);letter-spacing:0.5px;margin-bottom:8px;">🤖 AI WEEKLY SYNTHESIS</div><div style="font-size:13px;color:var(--muted);line-height:1.8;">'+result.replace(/\n/g,'<br>')+'</div>';
+    el.appendChild(aiDiv);
+    el.scrollIntoView({behavior:'smooth'});
+  }
+}
+
+// 10. MONEY PATTERN ANALYSIS (auto-runs when viewing money tab)
+async function aiMoneyAnalysis(){
+  const monthStr=activeMoneyMonth||todayKey().slice(0,7);
+  const expenses=(db.expenses||[]).filter(e=>e.date.startsWith(monthStr));
+  if(expenses.length<5)return; // Not enough data
+  const expStr=expenses.map(e=>e.cat+': ₹'+e.amount+(e.desc?' ('+e.desc+')':'')).join(', ');
+  const total=expenses.reduce((a,e)=>a+e.amount,0);
+  const result=await callAI(
+    'You are a money coach. Give 2-3 sharp insights about this spending pattern. Be specific with numbers. Identify any concerning patterns or smart wins. 3 sentences max.',
+    'This month spending (total ₹'+total+'): '+expStr
+  );
+  if(!result)return;
+  const el=document.getElementById('ai-money-insight');
+  if(el){el.style.display='block';el.innerHTML='<span style="font-size:11px;color:var(--gold);letter-spacing:0.5px;">🤖 SPENDING INSIGHT</span><br>'+result;}
+}
 
 // ─── GYM CONSTANTS ───────────────────────────────────────────────────────────
 const GYM_TYPES={
